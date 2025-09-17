@@ -94,7 +94,7 @@ class ExecutionInfoConsumerForLogger: ExecutionInfoConsumer {
 
 Note that the protocol `Logger` used here is just for the examples, you can use any logger you like, you just have to construct an according `ExecutionInfoConsumer`.
 
-Instead of the predefined `executionInfo.description(withIndentation: true)`, you can of course format the content of an `ExecutionInfo` or part of it as you like.
+Instead of the predefined `executionInfo.description`, you can of course format the content of an `ExecutionInfo` or part of it as you like.
 
 The information about the process or the work in question is nothing that the Pipeline framework has to be concerned with, it could be considered in the following way:
 
