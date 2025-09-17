@@ -30,7 +30,7 @@ class ExecutionInfoConsumerForLogger: ExecutionInfoConsumer {
     }
     
     func consume(_ executionInfo: ExecutionInfo, atLevel level: Int) {
-        logger.log("\(String(repeating: "    ", count: level))\(executionInfo)")
+        logger.log(executionInfo.description, indentation: String(repeating: "    ", count: level))
     }
 }
 
