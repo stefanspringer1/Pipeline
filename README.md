@@ -50,10 +50,6 @@ The Workflow package will be then usable in a Swift file after adding the follow
 import Pipeline
 ```
 
-## Related packages
-
-When working with [SwiftXML](https://github.com/stefanspringer1/SwiftXML) in the context of this workflow framework, you might include the [WorkflowUtilitiesForSwiftXML](https://github.com/stefanspringer1/WorkflowUtilitiesForSwiftXML).
-
 ## Tutorial
 
 The first thing you need it an instance to process messages from the execution, reporting if a step has beeen begun etc. The processing of these messages always has to be via a simple synchronous methods, no matter if the actual logging used behind the scenes is asynchronous or not. Most logging environment are working with such a synchronous method.
