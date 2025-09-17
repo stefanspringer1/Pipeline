@@ -135,7 +135,7 @@ func myWork_step(
     during execution: Execution,
     logger: Logger
 ) {
-    execution.effectuate("doingthis and that", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+    execution.effectuate("doing this and that", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
         
         // ... some other code...
         
