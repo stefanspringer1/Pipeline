@@ -1,0 +1,603 @@
+# Pipeline
+
+A simple framework for constructing a pipeline to process a single work item.
+
+The framework helps to define a complex processing of one “work item” that can be executed within an `Execution` environment. For each work item a separate `Execution` instance has to be created. If more than one work item is to be processed, then more than one `Execution` instance has to be used.
+
+The logging is not part of this framework, but the processing information of the pipeline can be used for logging.
+
+The framework can also handle asynchronous calls (see the section about working in asynchronous contexts).
+
+This framework relies in part on some easy conventions[^1] to make the logic of your processing more intelligible. At its core it is just “functions calling functions” and such gives you at once perfomance, flexibility, and type safety. (So it does not define a process logic in a “traditional” way, which would not allow such flexibility.)
+
+[^1]: One can remove the term “convention” entirely from the description and say that the processing is controlled by calls to the `effectuate` and `force` methods with unique identifiers, which implements a process management. The conventions are used for clarity and are not decisive from a conceptual point of view.
+
+This documentation contains some motivation. For a quick start, there is a tutorial below. For more details, you might look at the conventions (between horizontal rules) given further below and look at some code samples. A complete example is given as [SwiftWorkflowExampleProgram](https://github.com/stefanspringer1/SwiftWorkflowExampleProgram), using some steps defined in the library [SwiftWorkflowExampleLibrary](https://github.com/stefanspringer1/SwiftWorkflowExampleLibrary). The common data format being read at each “entry point” (job) in that example (which could be e.g. an XML document in other cases) is defined in [SwiftWorkflowExampleData](https://github.com/stefanspringer1/SwiftWorkflowExampleData). Code from that example (maybe in modified form) is used below.
+
+[WorkflowInVapor](https://github.com/stefanspringer1/WorkflowInVapor) is a simple [Vapor](https://vapor.codes) app using a workflow.
+
+The API documentation is to be created by using DocC, e.g. in Xcode via „Product“ / „Build Documentation“.[^2]
+
+[^2]: But note that in the current state of DocC, that documentation will not document any extensions, see the Swift issue [SR-15410](https://github.com/apple/swift-docc/issues/210).
+
+The `import Pipeline` and other imports are being dropped in the code samples.
+
+## How to add the package to your project
+
+The package is to be inlcuded as follows in another package: in `Package.swift` add:
+
+The top-level dependency:
+
+```Swift
+.package(url: "https://github.com/stefanspringer1/Pipeline", from: "...put the minimal version number here..."),
+```
+
+(You might reference an exact version by defining e.g. `.exact("0.0.1")` instead.)
+
+As dependency of your product, you then just add `"Pipeline"`.
+
+As long as the [concise magic file name](https://github.com/apple/swift-evolution/blob/main/proposals/0274-magic-file.md) is not yet the default for your Swift version, you need to enable it via the following [upcoming feature flag](https://www.swift.org/blog/using-upcoming-feature-flags/) for your target:
+
+```Swift
+swiftSettings: [
+    .enableUpcomingFeature("ConciseMagicFile"),
+]
+```
+
+The Workflow package will be then usable in a Swift file after adding the following import:
+
+```Swift
+import Pipeline
+```
+
+## Related packages
+
+When working with [SwiftXML](https://github.com/stefanspringer1/SwiftXML) in the context of this workflow framework, you might include the [WorkflowUtilitiesForSwiftXML](https://github.com/stefanspringer1/WorkflowUtilitiesForSwiftXML).
+
+## Tutorial
+
+The first thing you need it an instance to process messages from the execution, reporting if a step has beeen begun etc. The processing of these messages always has to be via a simple synchronous methods, no matter if the actual logging used behind the scenes is asynchronous or not. Most logging environment are working with such a synchronous method.
+
+You need an instance conforming to `ExecutionInfoConsumer`, e.g.:
+
+```Swift
+protocol Logger {
+    func log(_ message: String)
+    func log(_ message: String, indentation: String)
+}
+
+class PrintingLogger: Logger {
+    
+    func log(_ message: String) {
+        print(message)
+    }
+    
+    func log(_ message: String, indentation: String) {
+        print(indentation + message)
+    }
+    
+}
+
+class ExecutionInfoConsumerForLogger: ExecutionInfoConsumer {
+    
+    private var logger: Logger
+    
+    init(logger: Logger) {
+        self.logger = logger
+    }
+    
+    func consume(_ executionInfo: ExecutionInfo, atLevel level: Int) {
+        logger.log("\(String(repeating: "    ", count: level))\(executionInfo)")
+    }
+}
+```
+
+Note that the protocol `Logger` used here is just for the examples, you can use any logger you like, you just have to construct an according `ExecutionInfoConsumer`.
+
+Instead of the predefined `executionInfo.description(withIndentation: true)`, you can of course format the content of an `ExecutionInfo` or part of it as you like.
+
+The information about the process or the work in question is nothing that the Pipeline framework has to be concerned with, it could be considered in the following way:
+
+```Swift
+class ExecutionInfoConsumerForLoggerWithContext: ExecutionInfoConsumer {
+    
+    private var logger: Logger
+    let applicationName: String
+    let processID: String
+    let workItemInfo: String
+
+    init(logger: Logger, applicationName: String, processID: String, forWorkItem workItemInfo: String) {
+        self.logger = logger
+        self.applicationName = applicationName
+        self.processID = processID
+        self.workItemInfo = workItemInfo
+    }
+    
+    func consume(_ executionInfo: ExecutionInfo, atLevel level: Int) {
+        logger.log("\(applicationName): \(processID)/\(workItemInfo): \(String(repeating: "    ", count: level))\(executionInfo)")
+    }
+}
+```
+
+Then, for each work item that you want to process (whatever your work items might be, maybe you have only one work item so you do not need a for loop), use a new `Execution` object:
+
+```Swift
+let logger = PrintingLogger()
+let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+
+let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer)
+```
+
+The step you call (in the following example: `myWork_step`) might have any other arguments besides the `Execution` and some logger, and the postfix `_step` is only for convention. Your step might be implemented as follows:
+
+```Swift
+func myWork_step(
+    during execution: Execution,
+    logger: Logger
+) {
+    execution.effectuate("doingthis and that", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+        
+        // ... some other code...
+        
+        myOther_step(during: execution, logger: logger)
+        
+        // ... some other code...
+        
+    }
+}
+```
+
+`#file` should denote the [concise magic file name](https://github.com/apple/swift-evolution/blob/main/proposals/0274-magic-file.md) `<module-name>/<file-name>` (you might have to use the [upcoming feature flag](https://www.swift.org/blog/using-upcoming-feature-flags/) `ConciseMagicFile` for this, see the `Package.swift` file of this package).
+
+I.e. you embrace the content of your function inside a `execution.effectuate` call so that the `Execution` instance can control and inform about the execution of your code. The `StepID` instance is used as a unique identifier for your step.
+
+_Note that in order to be able to use future enhancemants of the library, you should not have code outside this single call of `effectuate` in your function!_
+
+Inside your step you might call other steps. In the example above, `myOther_step` has the same arguments as `myWork_step`, but in the general case, this does not have to be this way. On the contrary, our recommendation is to only give to each step the data that it really needs.
+
+If you call `myOther_step` inside `myWork_step` as in the example above, `myOther_step` (or more precisely, the code inside it that is embraced in a `execution.effectuate` call) will not be executed if `myWork_step` has already been executed before during the same execution (of the work item). This way you can formulate prerequisites that should have been run before, but without getting the prerequisites executed multiple times. If you want to force the execution of `myOther_step` at this point, use the following code:
+
+```Swift
+execution.force {
+    myOther_step(during: execution, logger: logger)
+}
+```
+
+You can also disremember what is executed with the following call:
+
+```Swift
+execution.disremember {
+    myOther_step(during: execution, logger: logger)
+}
+```
+
+There are also be named optional parts that can be activated by adding an according value to the `withOptions` value in the initializer of the `Execution` instance:
+
+```Swift
+execution.optional(named: "module1:myOther_step", description: "...this is a description...") {
+        myOther_step(during: execution, logger: logger)
+}
+```
+
+On the contrary, if you regard a step at a certain point or more generally a certain code block as something dispensable (i.e. the rest of the application does not suffer from inconsistencies if this part does not get executed), use the following code: 
+
+```Swift
+execution.dispensable(named: "module1:myOther_step", description: "...this is a description...")) {
+        myOther_step(during: execution, logger: logger)
+}
+```
+
+The part can then be deactivated by adding the according name to the `dispensingWith` value in the initializer of the `Execution` instance.
+
+So with `execution.optional(named: ...) { ... }` you define a part that does not run in the normal case but can be activated, and with `execution.dispensable(named: ...) { ... }` you define a part that runs in the normal case but can be deactivated. It is recommended to add the module name to the part name as a prefix in both cases.
+
+An activated option can also be dispensed with („dispensing wins“).
+
+If your function contains `async` code (i.e. `await` is being used in the calls), use `AsyncExecution` instead of `Execution` or `execution.async.force`. Inside an `AsyncExecution`, you get the according `Execution` instance via `myAsyncExecution.synchronous`, so you can asynchronous steps at the outside that are calling  synchronous steps in the inside.
+
+The texts `$0`, `$1`, ... are being replaced by arguments (of type `String`) in their order in the call to `execution.log`.
+
+## Motivation
+
+We think of a processing of a work item consisting of several steps, each step fullfilling a certain piece of work. We first see what basic requirements we would like to postulate for those steps, and then how we could realize that in practice.
+
+### Requirements for the execution of steps
+
+The steps comprising the processing might get processed in sequence, or one step contains other steps, so that step A might execute step B, C, and D.
+
+We could make the following requirements for the organization of steps:
+
+- A step might contain other steps, so we can organize the steps in a tree-like structure.
+- Some steps might stem from other packages.
+- A step might have as precondition that another step has already been executed before it can do some piece of work.
+- There should be an environment accessible inside the steps which can be used for logging (or other communication).
+- This environment should also have control over the execution of the steps, e.g. when there is a fatal error, no more steps should be executed.
+
+But of course, we do not only have a tree-like structure of steps executing each-other, _somewhere_ real work has to be done. Doing real work should also be done inside a step, we do not want to invent another type of thing, so:
+
+- In each step should be able to do real work besides calling other steps.
+
+We would even go further:
+
+- In each step, there should be no rules of how to mix “real work” and the calling of other steps. This should be completely flexible.
+
+We should elaborate this last point. This mixture of the calling of steps and other code may seem suspicious to some. There are frameworks for organizing the processing which are quite strict in their structure and make a more or less strict separation between the definition of which steps are to be executed and when, and the actual code doing the real work. But seldom this matches reality (or what we want the reality to be). E.g. we might have to decide dynamically during execution which step to be processed at a certain point of the execution. This decision might be complex, so we would like to be able to use complex code to make the decision, and moreover, put the code exactly to where the call of the step is done (or not done).
+
+We now have an idea of how we would like the steps to be organized.
+
+In addition, the steps will operate on some data to be processed, might use some configuration data etc., so we need to be able to hand over some data to the steps, preferably in a strictly typed manner. A step might change this data or create new data and return the data as a result. And we do not want to presuppose what types the data has or how many arguments are used, a different step might have different arguments (or different types of return values).
+
+Note that the described flexibility of the data used by each step is an important requirement for modularization. We do not want to pass around the same data types during our processing; if we did so, we could not extract a part of our processing as a separate, independant package, and we would not be very precise of what data is required for a certain step.
+
+### Realization of steps
+
+When programming, we have a very common concept that fullfills most of the requirements above: the concept of a _function._ But when we think of just using functions as steps, two questions immediately arise:
+
+- How do we fullfill the missing requirements?
+- How can we visually make clear in the code where a step gets executed?
+
+So when we use functions as steps, the following requirements are missing:
+
+- A step might have as precondition that another step has already been executed before it can do some piece of work.
+- There should be an environment accessible inside the steps which can be used for logging (or other communication).
+- This environment should also have control over the execution of the steps, e.g. when there is a fatal error, the execution of the steps should stop.
+
+We will see in the next section how this is resolved. For the second question ("How can we visually make clear in the code where a step gets executed?"): We just use the convenstion that a step i.e. a function that realizes a step always has the postfix "\_step" in its name. Some people do not like relying on conventions, but in practice this convention works out pretty well.
+
+---
+**Convention**
+
+A function representing a step has the postfix `_step` in its name.
+
+---
+
+## Concept
+
+### An execution
+
+An `Execution` has control over the steps, i.e. it can decide if a step actually executes, and it can inform about what if happening. 
+
+### Formulation of a step
+
+To give an `Execution` control over a function representing a step, its statements are to be wrapped inside a call to `Execution.effectuate`.
+
+---
+**Convention**
+
+A function representing a step uses a call to `Execution.effectuate` to wrap all its other statements.
+
+---
+
+We say that a step “gets executed” when we actually mean that the statements inside its call to `effectuate` get executed.
+
+A step fullfilling "task a" is to be formulated as follows. In the example below, `data` is the instance of a class being changed during the execution (of cource, our steps could also return a value, and different interacting steps can have different arguments). The execution keeps track of the steps run by using _a unique identifier for each step._ An instance of `StepID` is used as such an identifier, which contains a) a designation for the file that is unique across modules (using [concise magic file name](https://github.com/apple/swift-evolution/blob/main/proposals/0274-magic-file.md)), and b) using the function signature which is unique when using only top-level functions as steps.
+
+```Swift
+func a_step(
+    during execution: Execution,
+    data: MyData,
+    logger: Logger
+) {
+    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+        
+        logger.log("working in step a")
+        
+    }
+}
+```
+
+---
+**Convention**
+
+- A function representing a step is a top-level function.
+- Use the function signature available via `"\(#function)@\(#file)"` as the identifier in the call of the `effectuate` method.
+
+---
+
+Let us see how we call the step `a_step` inside another step `b_step`:
+
+```Swift
+func b_step(
+    during execution: Execution,
+    data: MyData,
+    logger: Logger
+) {
+    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+        
+        a_step(during: execution, data: data, logger: logger)
+        
+        logger.log("working in step b")
+    }
+}
+```
+
+Here, the call to `a_step` can be seen as the formulation of a requirement for the work done by `b_step`.
+
+Let us take another step `c_step` which first calls `a_step`, and then `b_step`:
+
+```Swift
+func c_step(
+    during execution: Execution,
+    data: MyData,
+    logger: Logger
+) {
+    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+        
+       a_step(during: execution, data: data, logger: logger)
+       b_step(during: execution, data: data, logger: logger)
+        
+       logger.log("working in step c")
+        
+    }
+}
+```
+
+Again, `a_step` and `b_step` can be seen here as requirements for the work done by `c_step`.
+
+When using `c_step`, inside `b_step` the step `a_step` is _not_ being executed, because `a_step` has already been excuted at that time. By default it is assumed that a step does some manipulation of the data, and calling a step  says "I want those manipulation done at this point". This is very common in complex processing scenarios and having this behaviour ensures that a step can be called in isolation and not just as part as a fixed, large processing pipeline, because it formulates itself which prerequisites it needs.[^4]
+
+[^4]: Note that a bad formulation of your logic can get you in trouble with the order of the steps: If `a_step` should be executed before `b_step` and not after it, and when calling `c_step`, `b_step` has already been executed but not `a_step` (so, other than in our example, `a_step` is not given as a requirement for `b_step`), you will get the wrong order of execution. In practice, we never encountered such a problem.
+
+---
+**Convention**
+
+Requirements for a step are formulated by just calling the accordings steps (i.e. the steps that fullfill the requirements) inside the step. (Those steps will not run again if they already have been run.)
+
+---
+
+
+But sometimes a certain other step is needed just before a certain point in the processing, no matter if it already has been run before. In that case, you can use the `force` method of the execution:
+
+```Swift
+func b_step(
+    during execution: Execution,
+    data: MyData,
+    logger: Logger
+) {
+    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+        
+        execution.force {
+            a_step(during: execution, data: data, logger: logger)
+        }
+        
+        logger.log("working in step b")
+        
+    }
+}
+```
+
+Now `a_step` always runs inside `b_step` (if `b_step` gets executed).
+
+Note that any sub-steps of a forced step are _not_ automatically forced. But you can pass a forced execution onto a sub-step by calling it inside `inheritForced`:
+
+```Swift
+func b_step(
+    during execution: Execution,
+    data: MyData,
+    logger: Logger
+) {
+    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+        
+        execution.inheritForced {
+            // this execution of a_step is forced if the current execution of b_step has been forced:
+            a_step(during: execution, data: data, logger: logger)
+        }
+        
+        logger.log("working in step b")
+        
+    }
+}
+```
+
+---
+**Convention**
+
+Use the `Execution.force` method if a certain step has to be run at a certain point no matter if it already has been run before.
+
+---
+
+### How to return values
+
+If the step is to return a value, this must to be an optional one:
+
+```Swift
+func my_step(
+    during execution: Execution,
+    data: MyData,
+    logger: Logger
+) -> String? {
+    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+        ...
+        return "my result"
+        ...
+    }
+}
+```
+
+Note that the `effectuate` method returns the according value, so there is no need to set up any variable outside the `effectuate` call.
+
+_The optionality must stem from the fact that the execution might be effectuated or not._ If the code within the `effectuate` call is itself is meant to return an optional value, this has to be done e.g. via the `Result` struct:
+
+```Swift
+func my_step(
+    during execution: Execution,
+    data: MyData,
+    logger: Logger
+) -> Result<String, ErrorWithDescription>? {
+    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+        ...
+        var value: String?
+        ...
+        if let value {
+            return .success(value)
+        } else {
+            return .failure(ErrorWithDescription("the value is not set")))
+        }
+}
+```
+
+You can then check if (in the example) a `String` value is returned by e.g.:
+
+```Swift
+if case .success(let text) = my_step(during: execution:, data: MyData) {
+    print(text)
+}
+```
+
+### Outsourcing functionality into a new package
+
+The tree-like pattern of steps that you are able to use in a workflow is a natural starting point to outsource some functionality of your workflow into an external package.
+
+### Organisation of the code in the files
+
+We think it a a sensible thing to use one file for one step. Together with the step data (which includes the error messages, see below), maybe an according library function, or a job function (see below), this "fits" very well a file in many case.
+
+We also prefer to use folders with scripts according to the calling structure as far as possible, and we like to use a prefix `_external_` for the names of folders and source files if the contained steps actually call external steps i.e. library functions as described above.
+
+### Limitations
+
+This approach has as limitation that a library function is a kind of isolated step: From the view of a library function being called, there are no step functions that already have been run. In some cases, this limitation might lead to preparation steps done sevaral times, or certain prerequisites have to be formulated in the documentation of the library function and the according measures then taken in the wrapper of the library function. Conversely, to the outside not all that has been done by the library function might be taken into account in subsequent steps.
+
+In practice we think that this limitation is not a severe one, because usually a library function is a quite encapsulated unit that applies, so to speak, some collected knowledge to a certain problem field and _should not need to know much_ about the outside.
+
+### Fatal errors and resetting the error level
+
+The execution can be aborted by the `abort()` method of the `Execution`. No further step is then caleld, but note that any remaining code outside of steps is still being executed. You might want to do this in case of a fatal error.
+
+The error level is something that belongs to the logging system and not to the Pipeline package, but the following should be mentioned here:
+
+A fatal error according to an included package could be better interpreted as a normal error at the caller side. For example, the conversion of an image might fail, so this migth be (or even should) be a fatal error from the view of the imaging package being used. But within the package that is using the imaging package this could be seen as a normal error, the whole processign does not have to be aborted if just one image cannot be converted, it then suffices to report a normal error.
+
+So the logging library should have the option to execute some code while downgrading or appeasing e.g. all fatal error to a normal error.
+
+### Jobs
+
+Steps as described should be flexible enough for the definition of a sequence of processing. But in some circumstances you might want to distinguish between a step that reads (and maybe writes) the data that you would like to process, and the steps in between that processes that data. A step that reads (and maybe writes) the data would then be the starting point for a processing. We call such a step a “job” and give its name the postfix `_job` instead of `_step`:
+
+```Swift
+func helloAndBye_job(
+    during execution: Execution,
+    file: URL,
+    logger: Logger
+) {
+    
+    // get the data:
+    guard let data = readData_step(during: execution, file: file) else { return }
+    
+    // start the processing of the data:
+    helloAndBye_step(during: execution, data: data, logger: logger)
+}
+```
+
+So a job is a kind of step that can be called on top-level i.e. not from within another step.
+
+It is a good practice to always create a job for each step even if such a job is not planned for the final product, so one can test each step separately by calling the according job.
+
+### Using an execution just for logging
+
+You might use an `Execution` instance ouside any step just to make the logging streamlined.
+
+### Jobs as starting point for the same kind of data
+
+Let us suppose you have jobs that all share the same arguments and the same data (i.e. the same return values) and you would like to decide by a string value (which could be the value of a command line argument) which job to start.
+
+So a job looks e.g. as follows:
+
+```Swift
+typealias Job = (
+    Execution,
+    URL
+) -> ()
+```
+
+In this case we like to use a "job registry" as follows (for the step data, see the section below):
+
+```Swift
+var jobRegistry: [String:(Job?,StepData)] = [
+    "hello-and-bye": JobAndData(job: helloAndBye_job, stepData: HelloAndBye_stepData.instance),
+    // ...
+]
+```
+
+The step data – more on that in the next section – is part of the job registry so that all possible messages can be automatically collected by a `StepDataCollector`, which is great for documentation. (This is why the job in the registry is optional, so you can have messages not related to a step, but nevertheless formulated inside a `StepData`, be registered here under an abstract job name.)
+
+The resolving of a job name and the call of the appropriate job is then done as follows:
+
+```Swift
+    if let jobFunction = jobRegistry[job]?.job {
+        
+        let logger = PrintingLogger()
+        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+        let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer)
+        
+        jobFunction(
+            execution,
+            URL(fileURLWithPath: path)
+        )
+    }
+    else {
+        // error...
+    }
+```
+
+### Spare usage of step arguments
+
+Generally, a step should only get as data what it really needs in its arguments. E.g. handling over a big collection of configuration data might ease the formulation of the steps, but being more explicit here - i.e. handling over just the parts of the configuration data that the step needs – makes the usage of the data much more transparent and modularization (i.e. the extraction of some step into a separate, independant package) easy.
+
+### Step data
+
+Each step should have an instance of `StepData` in its script with:
+
+- a short description of the step, and
+- a collection of message that can be used when logging.
+
+When logging, only the messages declared in the step data should be used.
+
+A message is a collection of texts with the language as keys, so you can define
+the message text in different languages. The message also defines the type of the
+message, e.g. if it informs about the progress or about a fatal error.
+
+The message types (of type `MessageType`, e.g. `Info` or `Warning`) have a strict order, so you can choose the minimal level for a message to be logged. But the message type `Progress` is special: if progress should be logged is defined by an additional parameter.
+
+See the example project for more details.
+
+### Working in asynchronous contexts
+
+A step might also be asynchronous, i.e. the caller might get suspended. Let's suppose that for some reason `bye_step` from above is async (maybe we are building a web application and `bye_step` has to fetch data from a database):
+
+```Swift
+func bye_step(
+    during execution: AsyncExecution,
+    data: MyData,
+    logger: Logger
+) async {
+    ...
+```
+
+As mentioned above, you have to use `AsyncExecution`, and you can get call synchronous step with teh `Execution` instance `execution.synchronous`.
+
+### Execution in a concurrent context
+
+In a concurrent context, use `execution.parallel` to create a copy of an `execution`.
+
+Example:
+
+```Swift
+dispatchGroup.enter()
+dispatchQueue.async {
+    semaphore.wait()
+    let parallelExecution = execution.parallel
+    myStep(
+        during: parallelExecution,
+        theDate: theData
+    )
+    semaphore.signal()
+    disptachGroup.leave()
+}
+```
+
+Note that the parallel steps are not registered in the execution database. But the above code migth be part of anther step not executed in parallel, and that one will then be registered.
+
+### Pause/stop
+
+In order to pause or stop the execution of steps, appropriate methods of `Execution` are available.

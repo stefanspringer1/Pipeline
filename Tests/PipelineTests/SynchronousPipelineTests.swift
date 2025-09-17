@@ -1,0 +1,188 @@
+import Testing
+import Pipeline
+import Foundation
+
+@Suite(.serialized) struct SynchronousPipelineTests {
+    
+    @Test func testExecution() throws {
+        
+        func step1(during execution: Execution, abortInStep2a: Bool = false, logger: Logger) {
+            #expect(execution.level == 0)
+            execution.effectuate("doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                #expect(execution.level == 1)
+                execution.optional(named: "step2", description: "we usually do not step2") {
+                    #expect(execution.level == 2)
+                    step2a(during: execution, abort: abortInStep2a, logger: logger)
+                    execution.doing("calling step2b in step1") {
+                        #expect(execution.level == 3)
+                        step2b(during: execution, logger: logger)
+                    }
+                }
+            }
+        }
+        
+        func step2a(during execution: Execution, abort: Bool = false, logger: Logger) {
+            #expect(execution.level == 2)
+            execution.effectuate("doing something in step2a", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                #expect(execution.level == 3)
+                execution.dispensable(named: "calling step3a and step3b in step2a", description: "we might want to skip step3a and step3b in step2a") {
+                    #expect(execution.level == 4)
+                    step3a(during: execution, logger: logger)
+                    if abort {
+                        execution.abort(reason: "for some reason")
+                    }
+                    step3b(during: execution, logger: logger)
+                }
+            }
+        }
+        
+        func step2b(during execution: Execution, logger: Logger) {
+            execution.effectuate("doing something in step2b", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                execution.dispensable(named: "calling step3a in step2b", description: "we might want to skip step3a in step2b") {
+                    #expect(execution.executionPath == """
+                        step step1(during:abortInStep2a:logger:)@\(#file) (doing something in step1) -> optional part "step2" (we usually do not step2) -> doing "calling step2b in step1" -> step step2b(during:logger:)@\(#file) (doing something in step2b) -> dispensable part "calling step3a in step2b" (we might want to skip step3a in step2b)
+                        """)
+                    step3a(during: execution, logger: logger)
+                    execution.force {
+                        step3a(during: execution, logger: logger)
+                    }
+                }
+            }
+        }
+        
+        func step3a(during execution: Execution, logger: Logger) {
+            execution.effectuate("doing something in step3a", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                step4(during: execution, logger: logger)
+            }
+        }
+        
+        func step3b(during execution: Execution, logger: Logger) {
+            execution.effectuate("doing something in step3b", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+            }
+        }
+        
+        func step4(during execution: Execution, logger: Logger) {
+            execution.effectuate("doing something in step4", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                logger.log("we are in step 4", indentation: execution.currentIndentation)
+            }
+        }
+        
+        do {
+            let logger = CollectingLogger()
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+            
+            let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer)
+            
+            step1(during: execution, logger: logger)
+            
+            #expect(logger.messages.joined(separator: "\n") == """
+                beginning step step1(during:abortInStep2a:logger:)@\(#file) (doing something in step1)
+                    skipping optional part "step2" (we usually do not step2)
+                ending step step1(during:abortInStep2a:logger:)@\(#file) (doing something in step1)
+                """)
+        }
+        
+        do {
+            let logger = CollectingLogger()
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+            
+            let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
+            
+            step1(during: execution, logger: logger)
+            
+            #expect(logger.messages.joined(separator: "\n") == """
+                beginning step step1(during:abortInStep2a:logger:)@\(#file) (doing something in step1)
+                    beginning optional part "step2" (we usually do not step2)
+                        beginning step step2a(during:abort:logger:)@\(#file) (doing something in step2a)
+                            beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
+                                beginning step step3a(during:logger:)@\(#file) (doing something in step3a)
+                                    beginning step step4(during:logger:)@\(#file) (doing something in step4)
+                                        we are in step 4
+                                    ending step step4(during:logger:)@\(#file) (doing something in step4)
+                                ending step step3a(during:logger:)@\(#file) (doing something in step3a)
+                                beginning step step3b(during:logger:)@\(#file) (doing something in step3b)
+                                ending step step3b(during:logger:)@\(#file) (doing something in step3b)
+                            ending dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
+                        ending step step2a(during:abort:logger:)@\(#file) (doing something in step2a)
+                        beginning "calling step2b in step1"
+                            beginning step step2b(during:logger:)@\(#file) (doing something in step2b)
+                                beginning dispensible part "calling step3a in step2b" (we might want to skip step3a in step2b)
+                                    skipping previously executed step step3a(during:logger:)@\(#file) (doing something in step3a)
+                                    beginning forcing steps
+                                        beginning forced step step3a(during:logger:)@\(#file) (doing something in step3a)
+                                            skipping previously executed step step4(during:logger:)@\(#file) (doing something in step4)
+                                        ending forced step step3a(during:logger:)@\(#file) (doing something in step3a)
+                                    ending forcing steps
+                                ending dispensible part "calling step3a in step2b" (we might want to skip step3a in step2b)
+                            ending step step2b(during:logger:)@\(#file) (doing something in step2b)
+                        ending "calling step2b in step1"
+                    ending optional part "step2" (we usually do not step2)
+                ending step step1(during:abortInStep2a:logger:)@\(#file) (doing something in step1)
+                """)
+        }
+        
+        do {
+            let logger = CollectingLogger()
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+            
+            let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
+            
+            step1(during: execution, logger: logger)
+            
+            #expect(logger.messages.joined(separator: "\n") == """
+                beginning step step1(during:abortInStep2a:logger:)@\(#file) (doing something in step1)
+                    beginning optional part "step2" (we usually do not step2)
+                        beginning step step2a(during:abort:logger:)@\(#file) (doing something in step2a)
+                            beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
+                                beginning step step3a(during:logger:)@\(#file) (doing something in step3a)
+                                    beginning step step4(during:logger:)@\(#file) (doing something in step4)
+                                        we are in step 4
+                                    ending step step4(during:logger:)@\(#file) (doing something in step4)
+                                ending step step3a(during:logger:)@\(#file) (doing something in step3a)
+                                beginning step step3b(during:logger:)@\(#file) (doing something in step3b)
+                                ending step step3b(during:logger:)@\(#file) (doing something in step3b)
+                            ending dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
+                        ending step step2a(during:abort:logger:)@\(#file) (doing something in step2a)
+                        beginning "calling step2b in step1"
+                            beginning step step2b(during:logger:)@\(#file) (doing something in step2b)
+                                skipping dispensible part "calling step3a in step2b" (we might want to skip step3a in step2b)
+                            ending step step2b(during:logger:)@\(#file) (doing something in step2b)
+                        ending "calling step2b in step1"
+                    ending optional part "step2" (we usually do not step2)
+                ending step step1(during:abortInStep2a:logger:)@\(#file) (doing something in step1)
+                """)
+        }
+        
+        do {
+            let logger = CollectingLogger()
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+            
+            let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
+            
+            step1(during: execution, abortInStep2a: true, logger: logger)
+            
+            #expect(logger.messages.joined(separator: "\n") == """
+                beginning step step1(during:abortInStep2a:logger:)@\(#file) (doing something in step1)
+                    beginning optional part "step2" (we usually do not step2)
+                        beginning step step2a(during:abort:logger:)@\(#file) (doing something in step2a)
+                            beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
+                                beginning step step3a(during:logger:)@\(#file) (doing something in step3a)
+                                    beginning step step4(during:logger:)@\(#file) (doing something in step4)
+                                        we are in step 4
+                                    ending step step4(during:logger:)@\(#file) (doing something in step4)
+                                ending step step3a(during:logger:)@\(#file) (doing something in step3a)
+                                aborting execution: for some reason
+                                skipping step in aborted execution step3b(during:logger:)@\(#file) (doing something in step3b)
+                            ending dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
+                        aborted step step2a(during:abort:logger:)@\(#file) (doing something in step2a)
+                        beginning "calling step2b in step1"
+                            skipping step in aborted execution step2b(during:logger:)@\(#file) (doing something in step2b)
+                        ending "calling step2b in step1"
+                    ending optional part "step2" (we usually do not step2)
+                aborted step step1(during:abortInStep2a:logger:)@\(#file) (doing something in step1)
+                """)
+        }
+        
+    }
+    
+}
