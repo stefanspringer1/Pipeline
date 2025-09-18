@@ -1,4 +1,5 @@
 import Foundation
+import Localization
 
 /// Manages the execution of steps. In particular
 /// - prevents double execution of steps

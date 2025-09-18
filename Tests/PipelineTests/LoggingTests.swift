@@ -1,6 +1,7 @@
 import Testing
 import Pipeline
 import Foundation
+import Localization
 
 @Suite(.serialized) struct LoggingTests {
     
