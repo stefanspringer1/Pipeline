@@ -44,26 +44,6 @@ class PrintingLogger: Logger {
     
 }
 
-// from README:
-class ExecutionInfoConsumerForLoggerWithContext<MetaData: CustomStringConvertible>: ExecutionInfoConsumer {
-    
-    private var logger: Logger
-    let applicationName: String
-    let processID: String
-    let workItemInfo: String
-
-    init(logger: Logger, applicationName: String, processID: String, forWorkItem workItemInfo: String) {
-        self.logger = logger
-        self.applicationName = applicationName
-        self.processID = processID
-        self.workItemInfo = workItemInfo
-    }
-    
-    func consume(_ executionInfo: ExecutionInfo<MetaData>) {
-        logger.log(executionInfo.description)
-    }
-}
-
 struct MyMetaData: ExecutionMetaData {
     
     let applicationName: String
