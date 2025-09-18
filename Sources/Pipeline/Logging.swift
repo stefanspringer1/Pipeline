@@ -66,27 +66,6 @@ extension MultiLanguageText {
     }
 }
 
-/// A message contains a message ID, a message type, and fact and maybe solution as `MultiLanguageText`.
-public struct Message {
-    
-    public let id: String?
-    public let type: InfoType
-    public let fact: MultiLanguageText
-    public let solution: MultiLanguageText?
-    
-    public init(id: String?, type: InfoType, fact: MultiLanguageText, solution: MultiLanguageText? = nil) {
-        self.id = id
-        self.type = type
-        self.fact = fact
-        self.solution = solution
-    }
-    
-    public func setting(type newType: InfoType) -> Message {
-        return Message(id: id, type: newType, fact: fact, solution: solution)
-    }
-    
-}
-
 public extension MultiLanguageText {
     
     /// Replaces the placeholders in all message texts of an instance of
@@ -107,6 +86,27 @@ public extension MultiLanguageText {
     func filling(withArguments arguments: String...) -> MultiLanguageText {
         filling(withArguments: arguments)
     }
+}
+
+/// A message contains a message ID, a message type, and fact and maybe solution as `MultiLanguageText`.
+public struct Message {
+    
+    public let id: String?
+    public let type: InfoType
+    public let fact: MultiLanguageText
+    public let solution: MultiLanguageText?
+    
+    public init(id: String?, type: InfoType, fact: MultiLanguageText, solution: MultiLanguageText? = nil) {
+        self.id = id
+        self.type = type
+        self.fact = fact
+        self.solution = solution
+    }
+    
+    public func setting(type newType: InfoType) -> Message {
+        return Message(id: id, type: newType, fact: fact, solution: solution)
+    }
+    
 }
 
 public extension String {
