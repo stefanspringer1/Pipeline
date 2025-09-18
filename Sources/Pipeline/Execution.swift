@@ -3,7 +3,14 @@ import Foundation
 /// Manages the execution of steps. In particular
 /// - prevents double execution of steps
 /// - keeps global information for logging
-public class Execution {
+public class Execution<MetaData: ExecutionMetaData> {
+    
+    let metadata: MetaData
+    
+    var executionInfoConsumer: any ExecutionInfoConsumer<MetaData>
+    
+    let dispensedWith: Set<String>?
+    let activatedOptions: Set<String>?
     
     var executedSteps = Set<StepID>()
     
@@ -13,7 +20,7 @@ public class Execution {
         _effectuationStack
     }
     
-    var executionInfoConsumer: ExecutionInfoConsumer
+    public var waitNotPausedFunction: (() -> ())?
     
     public func setting(
         waitNotPausedFunction: (() -> ())? = nil
@@ -24,22 +31,19 @@ public class Execution {
         return self
     }
     
-    let dispensedWith: Set<String>?
-    let activatedOptions: Set<String>?
-    
-    public var parallel: Execution {
-        Execution(
+    public var parallel: Execution<MetaData> {
+        Execution<MetaData>(
+            metadata: metadata,
             executionInfoConsumer: executionInfoConsumer,
             effectuationStack: _effectuationStack,
             waitNotPausedFunction: waitNotPausedFunction
         )
     }
     
-    public var waitNotPausedFunction: (() -> ())?
-    
     public init(
+        metadata: MetaData,
         processID: String? = nil,
-        executionInfoConsumer: ExecutionInfoConsumer,
+        executionInfoConsumer: any ExecutionInfoConsumer<MetaData>,
         itemInfo: String? = nil,
         showSteps: Bool = false,
         debug: Bool = false,
@@ -49,6 +53,7 @@ public class Execution {
         waitNotPausedFunction: (() -> ())? = nil,
         logFileInfo: URL? = nil
     ) {
+        self.metadata = metadata
         self._effectuationStack = effectuationStack
         self.executionInfoConsumer = executionInfoConsumer
         self.activatedOptions = activatedOptions
@@ -64,10 +69,14 @@ public class Execution {
     
     public func abort(reason: String) {
         executionInfoConsumer.consume(
-            .abortingExecution(
-                reason: reason
-            ),
-            atLevel: level
+            ExecutionInfo(
+                metadata: metadata,
+                level: level,
+                structuralID: UUID(),
+                event: .abortingExecution(
+                    reason: reason
+                )
+            )
         )
         _aborted = true
     }
@@ -116,18 +125,26 @@ public class Execution {
     
     /// Executes always.
     public func force<T>(work: () throws -> T) rethrows -> T? {
-        
+        let structuralID = UUID()
         executionInfoConsumer.consume(
-            .beginningForcingSteps,
-            atLevel: level
+            ExecutionInfo(
+                metadata: metadata,
+                level: level,
+                structuralID: structuralID,
+                event: .beginningForcingSteps
+            )
         )
         _effectuationStack.append(.forcing)
         
         func rewind() {
             _effectuationStack.removeLast()
             executionInfoConsumer.consume(
-                .endingForcingSteps,
-                atLevel: level
+                ExecutionInfo(
+                    metadata: metadata,
+                    level: level,
+                    structuralID: structuralID,
+                    event: .endingForcingSteps
+                )
             )
         }
         
@@ -158,32 +175,45 @@ public class Execution {
     /// Something that does not run in the normal case but ca be activated. Should use module name as prefix.
     public func optional<T>(named partName: String, description: String? = nil, work: () throws -> T) rethrows -> T? {
         let result: T?
+        let structuralID = UUID()
         if activatedOptions?.contains(partName) != true || dispensedWith?.contains(partName) == true {
             executionInfoConsumer.consume(
-                .skippingOptionalPart(
-                    name: partName,
-                    description: description
-                ),
-                atLevel: level
+                ExecutionInfo(
+                    metadata: metadata,
+                    level: level,
+                    structuralID: structuralID,
+                    event: .skippingOptionalPart(
+                        name: partName,
+                        description: description
+                    )
+                )
             )
             result = nil
         } else {
             executionInfoConsumer.consume(
-                .beginningOptionalPart(
-                    name: partName,
-                    description: description
-                ),
-                atLevel: level
+                ExecutionInfo(
+                    metadata: metadata,
+                    level: level,
+                    structuralID: structuralID,
+                    event: .beginningOptionalPart(
+                        name: partName,
+                        description: description
+                    )
+                )
             )
             _effectuationStack.append(.optionalPart(name: partName, description: description))
             result = try execute(step: nil, description: nil, force: false, work: work)
             _effectuationStack.removeLast()
             executionInfoConsumer.consume(
-                .endingOptionalPart(
-                    name: partName,
-                    description: description
-                ),
-                atLevel: level
+                ExecutionInfo(
+                    metadata: metadata,
+                    level: level,
+                    structuralID: structuralID,
+                    event: .endingOptionalPart(
+                        name: partName,
+                        description: description
+                    )
+                )
             )
         }
         return result
@@ -192,129 +222,176 @@ public class Execution {
     /// Something that runs in the normal case but ca be dispensed with. Should use module name as prefix.
     public func dispensable<T>(named partName: String, description: String? = nil, work: () throws -> T) rethrows -> T? {
         let result: T?
+        let structuralID = UUID()
         if dispensedWith?.contains(partName) == true {
             executionInfoConsumer.consume(
-                .skippingDispensablePart(
-                    name: partName,
-                    description: description
-                ),
-                atLevel: level
+                ExecutionInfo(
+                    metadata: metadata,
+                    level: level,
+                    structuralID: structuralID,
+                    event: .skippingDispensablePart(
+                        name: partName,
+                        description: description
+                    )
+                )
             )
             result = nil
         } else {
             executionInfoConsumer.consume(
-                .beginningDispensablePart(
-                    name: partName,
-                    description: description
-                ),
-                atLevel: level
+                ExecutionInfo(
+                    metadata: metadata,
+                    level: level,
+                    structuralID: structuralID,
+                    event: .beginningDispensablePart(
+                        name: partName,
+                        description: description
+                    )
+                )
             )
             _effectuationStack.append(.dispensablePart(name: partName, description: description))
             result = try execute(step: nil, description: description, force: false, work: work)
             _effectuationStack.removeLast()
             executionInfoConsumer.consume(
-                .endingDispensablePart(
-                    name: partName,
-                    description: description
-                ),
-                atLevel: level
+                ExecutionInfo(
+                    metadata: metadata,
+                    level: level,
+                    structuralID: structuralID,
+                    event: .endingDispensablePart(
+                        name: partName,
+                        description: description
+                    )
+                )
             )
         }
         return result
     }
     
-    private func effectuateTest(forStep step: StepID, withDescription description: String?) -> (execute: Bool, forced: Bool) {
+    private func effectuateTest(forStep step: StepID, withDescription description: String?) -> (execute: Bool, forced: Bool, structuralID: UUID) {
+        let structuralID = UUID()
         if _aborted {
             executionInfoConsumer.consume(
-                .skippingStepInAbortedExecution(
-                    id: step,
-                    description: description
-                ),
-                atLevel: level
+                ExecutionInfo(
+                    metadata: metadata,
+                    level: level,
+                    structuralID: structuralID,
+                    event: .skippingStepInAbortedExecution(
+                        id: step,
+                        description: description
+                    )
+                )
             )
-            return (execute: false, forced: false)
+            return (execute: false, forced: false, structuralID: structuralID)
         } else if !executedSteps.contains(step) {
             executionInfoConsumer.consume(
-                .beginningStep(
-                    id: step,
-                    description: description,
-                    forced: false
-                ),
-                atLevel: level
+                ExecutionInfo(
+                    metadata: metadata,
+                    level: level,
+                    structuralID: structuralID,
+                        event: .beginningStep(
+                        id: step,
+                        description: description,
+                        forced: false
+                    )
+                )
             )
             executedSteps.insert(step)
-            return (execute: true, forced: false)
+            return (execute: true, forced: false, structuralID: structuralID)
         } else if forceValues.last == true {
             executionInfoConsumer.consume(
-                .beginningStep(
-                    id: step,
-                    description: description,
-                    forced: true
-                ),
-                atLevel: level
+                ExecutionInfo(
+                    metadata: metadata,
+                    level: level,
+                    structuralID: structuralID,
+                    event: .beginningStep(
+                        id: step,
+                        description: description,
+                        forced: true
+                    )
+                )
             )
             executedSteps.insert(step)
-            return (execute: true, forced: true)
+            return (execute: true, forced: true, structuralID: structuralID)
         } else {
             executionInfoConsumer.consume(
-                .skippingPreviouslyExecutedStep(
-                    id: step,
-                    description: description
-                ),
-                atLevel: level
+                ExecutionInfo(
+                    metadata: metadata,
+                    level: level,
+                    structuralID: structuralID,
+                    event: .skippingPreviouslyExecutedStep(
+                        id: step,
+                        description: description
+                    )
+                )
             )
-            return (execute: false, forced: false)
+            return (execute: false, forced: false, structuralID: structuralID)
         }
     }
     
     /// Logging some work (that is not a step) as progress.
     public func doing<T>(withID id: String? = nil, _ description: String, work: () throws -> T) rethrows -> T? {
+        let structuralID = UUID()
         executionInfoConsumer.consume(
-            .beginningDescribedPart(
-                description: description
-            ),
-            atLevel: level
+            ExecutionInfo(
+                metadata: metadata,
+                level: level,
+                structuralID: structuralID,
+                event: .beginningDescribedPart(
+                    description: description
+                )
+            )
         )
         _effectuationStack.append(.describedPart(description: description))
         let result = try work()
         _effectuationStack.removeLast()
         executionInfoConsumer.consume(
-            .endingDescribedPart(
-                description: description
-            ),
-            atLevel: level
+            ExecutionInfo(
+                metadata: metadata,
+                level: level,
+                structuralID: structuralID,
+                event: .endingDescribedPart(
+                    description: description
+                )
+            )
         )
         return result
     }
     
-    private func after(step: StepID, description: String?, forced: Bool, secondsElapsed: Double) {
+    private func after(step: StepID, structuralID: UUID, description: String?, forced: Bool, secondsElapsed: Double) {
         if _aborted {
             executionInfoConsumer.consume(
-                .abortedStep(
-                    id: step,
-                    description: description
-                ),
-                atLevel: level
+                ExecutionInfo(
+                    metadata: metadata,
+                    level: level,
+                    structuralID: structuralID,
+                    event: .abortedStep(
+                        id: step,
+                        description: description
+                    )
+                )
             )
         } else {
             executionInfoConsumer.consume(
-                .endingStep(
-                    id: step,
-                    description: description,
-                    forced: forced
-                ),
-                atLevel: level
+                ExecutionInfo(
+                    metadata: metadata,
+                    level: level,
+                    structuralID: structuralID,
+                    event: .endingStep(
+                        id: step,
+                        description: description,
+                        forced: forced
+                    )
+                )
             )
         }
     }
     
     /// Executes only if the step did not execute before.
     public func effectuate<T>(_ description: String? = nil, checking step: StepID, work: () throws -> T) rethrows -> T? {
-        let (execute: toBeExecuted,forced: forced) = effectuateTest(forStep: step, withDescription: description)
+        let (execute: toBeExecuted, forced: forced, structuralID: structuralID) = effectuateTest(forStep: step, withDescription: description)
         if toBeExecuted {
             let start = DispatchTime.now()
             let result = try execute(step: step, description: description, force: false, work: work)
-            after(step: step, description: description, forced: forced, secondsElapsed: elapsedSeconds(start: start))
+            after(step: step, structuralID: structuralID, description: description, forced: forced, secondsElapsed: elapsedSeconds(start: start))
             return result
         } else {
             return nil

@@ -3,11 +3,11 @@ import Foundation
 /// Manages the execution of steps. In particular
 /// - prevents double execution of steps
 /// - keeps global information for logging
-public actor AsyncExecution {
+public actor AsyncExecution<MetaData: ExecutionMetaData> {
     
-    let synchronousExecution: Execution
+    let synchronousExecution: Execution<MetaData>
     
-    public var synchronous: Execution {
+    public var synchronous: Execution<MetaData> {
         get async { synchronousExecution }
     }
     
@@ -20,8 +20,9 @@ public actor AsyncExecution {
         return self
     }
     
-    public var parallel: AsyncExecution {
+    public var parallel: AsyncExecution<MetaData> {
         AsyncExecution(
+            metadata: synchronousExecution.metadata,
             executionInfoConsumer: synchronousExecution.executionInfoConsumer,
             effectuationStack: synchronousExecution._effectuationStack,
             waitNotPausedFunction: synchronousExecution.waitNotPausedFunction
@@ -29,8 +30,9 @@ public actor AsyncExecution {
     }
     
     public init(
+        metadata: MetaData,
         processID: String? = nil,
-        executionInfoConsumer: ExecutionInfoConsumer,
+        executionInfoConsumer: any ExecutionInfoConsumer<MetaData>,
         itemInfo: String? = nil,
         showSteps: Bool = false,
         debug: Bool = false,
@@ -40,7 +42,8 @@ public actor AsyncExecution {
         waitNotPausedFunction: (() -> ())? = nil,
         logFileInfo: URL? = nil
     ) {
-        self.synchronousExecution = Execution(
+        self.synchronousExecution = Execution<MetaData>(
+            metadata: metadata,
             processID: processID,
             executionInfoConsumer: executionInfoConsumer,
             itemInfo: itemInfo,
@@ -72,22 +75,21 @@ public actor AsyncExecution {
         get async { synchronousExecution.currentIndentation }
     }
     
-    let semaphoreForPause = DispatchSemaphore(value: 1)
-    
     /// Pausing the execution (without effect for async execution).
     public func pause() {
-        semaphoreForPause.wait()
+        synchronousExecution.semaphoreForPause.wait()
     }
     
     /// Proceeding a paused execution.
     public func proceed() {
-        semaphoreForPause.signal()
+        synchronousExecution.semaphoreForPause.signal()
     }
     
     func waitNotPaused() {
         
         func waitNotPaused() {
-            semaphoreForPause.wait(); semaphoreForPause.signal()
+            synchronousExecution.semaphoreForPause.wait()
+            synchronousExecution.semaphoreForPause.signal()
         }
         
         (synchronousExecution.waitNotPausedFunction ?? waitNotPaused)() // wait if the execution is paused
@@ -110,18 +112,26 @@ public actor AsyncExecution {
     
     /// Executes always.
     public func force<T>(work: () async throws -> T) async rethrows -> T? {
-        
+        let structuralID = UUID()
         synchronousExecution.executionInfoConsumer.consume(
-            .beginningForcingSteps,
-            atLevel: await level
+            ExecutionInfo(
+                metadata: synchronousExecution.metadata,
+                level: synchronousExecution.level,
+                structuralID: structuralID,
+                event: .beginningForcingSteps
+            )
         )
         synchronousExecution._effectuationStack.append(.forcing)
         
         func rewind() async {
             synchronousExecution._effectuationStack.removeLast()
             synchronousExecution.executionInfoConsumer.consume(
-                .endingForcingSteps,
-                atLevel: synchronousExecution.level
+                ExecutionInfo(
+                    metadata: synchronousExecution.metadata,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                    event: .endingForcingSteps
+                )
             )
         }
         
@@ -152,32 +162,45 @@ public actor AsyncExecution {
     /// Something that does not run in the normal case but ca be activated. Should use module name as prefix.
     public func optional<T>(named partName: String, description: String? = nil, work: () async throws -> T) async rethrows -> T? {
         let result: T?
+        let structuralID = UUID()
         if synchronousExecution.activatedOptions?.contains(partName) != true || synchronousExecution.dispensedWith?.contains(partName) == true {
             synchronousExecution.executionInfoConsumer.consume(
-                .skippingOptionalPart(
-                    name: partName,
-                    description: description
-                ),
-                atLevel: synchronousExecution.level
+                ExecutionInfo(
+                    metadata: synchronousExecution.metadata,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                    event: .skippingOptionalPart(
+                        name: partName,
+                        description: description
+                    )
+                )
             )
             result = nil
         } else {
             synchronousExecution.executionInfoConsumer.consume(
-                .beginningOptionalPart(
-                    name: partName,
-                    description: description
-                ),
-                atLevel: synchronousExecution.level
+                ExecutionInfo(
+                    metadata: synchronousExecution.metadata,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                    event: .beginningOptionalPart(
+                        name: partName,
+                        description: description
+                    )
+                )
             )
             synchronousExecution._effectuationStack.append(.optionalPart(name: partName, description: description))
             result = try await execute(step: nil, description: nil, force: false, work: work)
             synchronousExecution._effectuationStack.removeLast()
             synchronousExecution.executionInfoConsumer.consume(
-                .endingOptionalPart(
-                    name: partName,
-                    description: description
-                ),
-                atLevel: synchronousExecution.level
+                ExecutionInfo(
+                    metadata: synchronousExecution.metadata,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                    event: .endingOptionalPart(
+                        name: partName,
+                        description: description
+                    )
+                )
             )
         }
         return result
@@ -186,129 +209,176 @@ public actor AsyncExecution {
     /// Something that runs in the normal case but ca be dispensed with. Should use module name as prefix.
     public func dispensable<T>(named partName: String, description: String? = nil, work: () async throws -> T) async rethrows -> T? {
         let result: T?
+        let structuralID = UUID()
         if synchronousExecution.dispensedWith?.contains(partName) == true {
             synchronousExecution.executionInfoConsumer.consume(
-                .skippingDispensablePart(
-                    name: partName,
-                    description: description
-                ),
-                atLevel: synchronousExecution.level
+                ExecutionInfo(
+                    metadata: synchronousExecution.metadata,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                    event: .skippingDispensablePart(
+                        name: partName,
+                        description: description
+                    )
+                )
             )
             result = nil
         } else {
             synchronousExecution.executionInfoConsumer.consume(
-                .beginningDispensablePart(
-                    name: partName,
-                    description: description
-                ),
-                atLevel: synchronousExecution.level
+                ExecutionInfo(
+                    metadata: synchronousExecution.metadata,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                    event: .beginningDispensablePart(
+                        name: partName,
+                        description: description
+                    )
+                )
             )
             synchronousExecution._effectuationStack.append(.dispensablePart(name: partName, description: description))
             result = try await execute(step: nil, description: description, force: false, work: work)
             synchronousExecution._effectuationStack.removeLast()
             synchronousExecution.executionInfoConsumer.consume(
-                .endingDispensablePart(
-                    name: partName,
-                    description: description
-                ),
-                atLevel: synchronousExecution.level
+                ExecutionInfo(
+                    metadata: synchronousExecution.metadata,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                    event: .endingDispensablePart(
+                        name: partName,
+                        description: description
+                    )
+                )
             )
         }
         return result
     }
     
-    private func effectuateTest(forStep step: StepID, withDescription description: String?) async -> (execute: Bool, forced: Bool) {
+    private func effectuateTest(forStep step: StepID, withDescription description: String?) async -> (execute: Bool, forced: Bool, structuralID: UUID) {
+        let structuralID = UUID()
         if synchronousExecution._aborted {
             synchronousExecution.executionInfoConsumer.consume(
-                .skippingStepInAbortedExecution(
-                    id: step,
-                    description: description
-                ),
-                atLevel: synchronousExecution.level
+                ExecutionInfo(
+                    metadata: synchronousExecution.metadata,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                    event: .skippingStepInAbortedExecution(
+                        id: step,
+                        description: description
+                    )
+                )
             )
-            return (execute: false, forced: false)
+            return (execute: false, forced: false, structuralID: structuralID)
         } else if !synchronousExecution.executedSteps.contains(step) {
             synchronousExecution.executionInfoConsumer.consume(
-                .beginningStep(
-                    id: step,
-                    description: description,
-                    forced: false
-                ),
-                atLevel: synchronousExecution.level
+                ExecutionInfo(
+                    metadata: synchronousExecution.metadata,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                        event: .beginningStep(
+                        id: step,
+                        description: description,
+                        forced: false
+                    )
+                )
             )
             synchronousExecution.executedSteps.insert(step)
-            return (execute: true, forced: false)
+            return (execute: true, forced: false, structuralID: structuralID)
         } else if synchronousExecution.forceValues.last == true {
             synchronousExecution.executionInfoConsumer.consume(
-                .beginningStep(
-                    id: step,
-                    description: description,
-                    forced: true
-                ),
-                atLevel: synchronousExecution.level
+                ExecutionInfo(
+                    metadata: synchronousExecution.metadata,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                    event: .beginningStep(
+                        id: step,
+                        description: description,
+                        forced: true
+                    )
+                )
             )
             synchronousExecution.executedSteps.insert(step)
-            return (execute: true, forced: true)
+            return (execute: true, forced: true, structuralID: structuralID)
         } else {
             synchronousExecution.executionInfoConsumer.consume(
-                .skippingPreviouslyExecutedStep(
-                    id: step,
-                    description: description
-                ),
-                atLevel: synchronousExecution.level
+                ExecutionInfo(
+                    metadata: synchronousExecution.metadata,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                    event: .skippingPreviouslyExecutedStep(
+                        id: step,
+                        description: description
+                    )
+                )
             )
-            return (execute: false, forced: false)
+            return (execute: false, forced: false, structuralID: structuralID)
         }
     }
     
     /// Logging some work (that is not a step) as progress.
     public func doing<T>(withID id: String? = nil, _ description: String, work: () async throws -> T) async rethrows -> T? {
+        let structuralID = UUID()
         synchronousExecution.executionInfoConsumer.consume(
-            .beginningDescribedPart(
-                description: description
-            ),
-            atLevel: synchronousExecution.level
+            ExecutionInfo(
+                metadata: synchronousExecution.metadata,
+                level: synchronousExecution.level,
+                structuralID: structuralID,
+                event: .beginningDescribedPart(
+                    description: description
+                )
+            )
         )
         synchronousExecution._effectuationStack.append(.describedPart(description: description))
         let result = try await work()
         synchronousExecution._effectuationStack.removeLast()
         synchronousExecution.executionInfoConsumer.consume(
-            .endingDescribedPart(
-                description: description
-            ),
-            atLevel: synchronousExecution.level
+            ExecutionInfo(
+                metadata: synchronousExecution.metadata,
+                level: synchronousExecution.level,
+                structuralID: structuralID,
+                event: .endingDescribedPart(
+                    description: description
+                )
+            )
         )
         return result
     }
     
-    private func after(step: StepID, description: String?, forced: Bool, secondsElapsed: Double) async {
+    private func after(step: StepID, structuralID: UUID, description: String?, forced: Bool, secondsElapsed: Double) async {
         if synchronousExecution._aborted {
             synchronousExecution.executionInfoConsumer.consume(
-                .abortedStep(
-                    id: step,
-                    description: description
-                ),
-                atLevel: synchronousExecution.level
+                ExecutionInfo(
+                    metadata: synchronousExecution.metadata,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                    event: .abortedStep(
+                        id: step,
+                        description: description
+                    )
+                )
             )
         } else {
             synchronousExecution.executionInfoConsumer.consume(
-                .endingStep(
-                    id: step,
-                    description: description,
-                    forced: forced
-                ),
-                atLevel: synchronousExecution.level
+                ExecutionInfo(
+                    metadata: synchronousExecution.metadata,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                    event: .endingStep(
+                        id: step,
+                        description: description,
+                        forced: forced
+                    )
+                )
             )
         }
     }
     
     /// Executes only if the step did not execute before.
     public func effectuate<T>(_ description: String? = nil, checking step: StepID, work: () async throws -> T) async rethrows -> T? {
-        let (execute: toBeExecuted,forced: forced) = await effectuateTest(forStep: step, withDescription: description)
+        let (execute: toBeExecuted, forced: forced, structuralID: structuralID) = await effectuateTest(forStep: step, withDescription: description)
         if toBeExecuted {
             let start = DispatchTime.now()
             let result = try await execute(step: step, description: description, force: false, work: work)
-            await after(step: step, description: description, forced: forced, secondsElapsed: elapsedSeconds(start: start))
+            await after(step: step, structuralID: structuralID, description: description, forced: forced, secondsElapsed: elapsedSeconds(start: start))
             return result
         } else {
             return nil

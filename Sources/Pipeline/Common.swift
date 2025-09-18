@@ -1,7 +1,12 @@
 import Foundation
 
-public protocol ExecutionInfoConsumer {
-    func consume(_ executionInfo: ExecutionInfo, atLevel level: Int)
+public protocol ExecutionMetaData: CustomStringConvertible, Sendable {
+    
+}
+
+public protocol ExecutionInfoConsumer<MetaData> {
+    associatedtype MetaData: CustomStringConvertible
+    func consume(_ executionInfo: ExecutionInfo<MetaData>)
 }
 
 public struct StepID: Hashable, CustomStringConvertible, Sendable {
@@ -53,7 +58,56 @@ extension Array where Element == Effectuation {
     }
 }
 
-public enum ExecutionInfo: CustomStringConvertible {
+public enum ExecutionInfoFormat {
+    case full
+    case bare
+    case bareIndented
+}
+
+public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConvertible {
+    
+    let time: Date
+    let metadata: MetaData
+    let level: Int
+    let structuralID: UUID
+    let event: ExecutionEvent
+    
+    internal init(
+        time: Date = Date.now,
+        metadata: MetaData,
+        level: Int,
+        structuralID: UUID,
+        event: ExecutionEvent
+    ) {
+        self.time = time
+        self.metadata = metadata
+        self.level = level
+        self.structuralID = structuralID
+        self.event = event
+    }
+    
+    public var description: String {
+        "\(time): \(metadata): \(String(repeating: "    ", count: level))\(event)"
+    }
+    
+    public func description(executionInfoDescription: ExecutionInfoFormat) -> String {
+        switch executionInfoDescription {
+        case .full:
+            description
+        case .bare:
+            event.description
+        case .bareIndented:
+            "\(String(repeating: "    ", count: level))\(event)"
+        }
+        
+    }
+    
+    public var bareIndentedDescription: String {
+        "\(String(repeating: "    ", count: level))\(event)"
+    }
+}
+
+public enum ExecutionEvent: CustomStringConvertible {
     
     case beginningStep(id: StepID, description: String?, forced: Bool)
     case endingStep(id: StepID, description: String?, forced: Bool)

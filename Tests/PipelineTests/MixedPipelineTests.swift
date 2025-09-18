@@ -3,12 +3,18 @@ import Pipeline
 
 @Suite(.serialized) struct MixedPipelineTests {
     
+    let metadata = MyMetaData(
+        applicationName: "myapp",
+        processID: "precess123",
+        workItemInfo: "item123"
+    )
+    
     /*
      This test is the same as the according one in PipelineTests, but with the outer steps asynchronous and the inner steps synchronous.
      */
     @Test func testExecution() async throws {
             
-        func step1(during execution: AsyncExecution, abortInStep2a: Bool = false, logger: Logger) async {
+        func step1<MetaData: ExecutionMetaData>(during execution: AsyncExecution<MetaData>, abortInStep2a: Bool = false, logger: Logger) async {
             #expect(await execution.level == 0)
             await execution.effectuate("doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 #expect(await execution.level == 1)
@@ -23,7 +29,7 @@ import Pipeline
             }
         }
         
-        func step2a(during execution: AsyncExecution, abort: Bool = false, logger: Logger) async {
+        func step2a<MetaData: ExecutionMetaData>(during execution: AsyncExecution<MetaData>, abort: Bool = false, logger: Logger) async {
             #expect(await execution.level == 2)
             await execution.effectuate("doing something in step2a", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 #expect(await execution.level == 3)
@@ -38,7 +44,7 @@ import Pipeline
             }
         }
         
-        func step2b(during execution: AsyncExecution, logger: Logger) async {
+        func step2b<MetaData: ExecutionMetaData>(during execution: AsyncExecution<MetaData>, logger: Logger) async {
             await execution.effectuate("doing something in step2b", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 await execution.dispensable(named: "calling step3a in step2b", description: "we might want to skip step3a in step2b") {
                     #expect(await execution.executionPath == """
@@ -52,28 +58,28 @@ import Pipeline
             }
         }
         
-        func step3a(during execution: Execution, logger: Logger) {
+        func step3a<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>, logger: Logger) {
             execution.effectuate("doing something in step3a", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 step4(during: execution, logger: logger)
             }
         }
         
-        func step3b(during execution: Execution, logger: Logger) {
+        func step3b<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>, logger: Logger) {
             execution.effectuate("doing something in step3b", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
             }
         }
         
-        func step4(during execution: Execution, logger: Logger) {
+        func step4<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>, logger: Logger) {
             execution.effectuate("doing something in step4", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-                logger.log("we are in step 4", indentation: execution.currentIndentation)
+                logger.log("we are in step 4")
             }
         }
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: .bareIndented)
             
-            let execution = AsyncExecution(executionInfoConsumer: myExecutionInfoConsumer)
+            let execution = AsyncExecution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
             
             await step1(during: execution, logger: logger)
             
@@ -86,9 +92,9 @@ import Pipeline
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: .bareIndented)
             
-            let execution = AsyncExecution(executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
+            let execution = AsyncExecution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
             
             await step1(during: execution, logger: logger)
             
@@ -99,7 +105,7 @@ import Pipeline
                             beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
                                 beginning step step3a(during:logger:)@\(#file) (doing something in step3a)
                                     beginning step step4(during:logger:)@\(#file) (doing something in step4)
-                                        we are in step 4
+                we are in step 4
                                     ending step step4(during:logger:)@\(#file) (doing something in step4)
                                 ending step step3a(during:logger:)@\(#file) (doing something in step3a)
                                 beginning step step3b(during:logger:)@\(#file) (doing something in step3b)
@@ -125,9 +131,9 @@ import Pipeline
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: .bareIndented)
             
-            let execution = AsyncExecution(executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
+            let execution = AsyncExecution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
             
             await step1(during: execution, logger: logger)
             
@@ -138,7 +144,7 @@ import Pipeline
                             beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
                                 beginning step step3a(during:logger:)@\(#file) (doing something in step3a)
                                     beginning step step4(during:logger:)@\(#file) (doing something in step4)
-                                        we are in step 4
+                we are in step 4
                                     ending step step4(during:logger:)@\(#file) (doing something in step4)
                                 ending step step3a(during:logger:)@\(#file) (doing something in step3a)
                                 beginning step step3b(during:logger:)@\(#file) (doing something in step3b)
@@ -157,9 +163,9 @@ import Pipeline
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: .bareIndented)
             
-            let execution = AsyncExecution(executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
+            let execution = AsyncExecution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
             
             await step1(during: execution, abortInStep2a: true, logger: logger)
             
@@ -170,7 +176,7 @@ import Pipeline
                             beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
                                 beginning step step3a(during:logger:)@\(#file) (doing something in step3a)
                                     beginning step step4(during:logger:)@\(#file) (doing something in step4)
-                                        we are in step 4
+                we are in step 4
                                     ending step step4(during:logger:)@\(#file) (doing something in step4)
                                 ending step step3a(during:logger:)@\(#file) (doing something in step3a)
                                 aborting execution: for some reason

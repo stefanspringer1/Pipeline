@@ -4,9 +4,15 @@ import Foundation
 
 @Suite(.serialized) struct SynchronousPipelineTests {
     
+    let metadata = MyMetaData(
+        applicationName: "myapp",
+        processID: "precess123",
+        workItemInfo: "item123"
+    )
+    
     @Test func testExecution() throws {
         
-        func step1(during execution: Execution, abortInStep2a: Bool = false, logger: Logger) {
+        func step1<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>, abortInStep2a: Bool = false, logger: Logger) {
             #expect(execution.level == 0)
             execution.effectuate("doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 #expect(execution.level == 1)
@@ -21,7 +27,7 @@ import Foundation
             }
         }
         
-        func step2a(during execution: Execution, abort: Bool = false, logger: Logger) {
+        func step2a<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>, abort: Bool = false, logger: Logger) {
             #expect(execution.level == 2)
             execution.effectuate("doing something in step2a", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 #expect(execution.level == 3)
@@ -36,7 +42,7 @@ import Foundation
             }
         }
         
-        func step2b(during execution: Execution, logger: Logger) {
+        func step2b<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>, logger: Logger) {
             execution.effectuate("doing something in step2b", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 execution.dispensable(named: "calling step3a in step2b", description: "we might want to skip step3a in step2b") {
                     #expect(execution.executionPath == """
@@ -50,28 +56,28 @@ import Foundation
             }
         }
         
-        func step3a(during execution: Execution, logger: Logger) {
+        func step3a<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>, logger: Logger) {
             execution.effectuate("doing something in step3a", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 step4(during: execution, logger: logger)
             }
         }
         
-        func step3b(during execution: Execution, logger: Logger) {
+        func step3b<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>, logger: Logger) {
             execution.effectuate("doing something in step3b", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
             }
         }
         
-        func step4(during execution: Execution, logger: Logger) {
+        func step4<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>, logger: Logger) {
             execution.effectuate("doing something in step4", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-                logger.log("we are in step 4", indentation: execution.currentIndentation)
+                logger.log("we are in step 4")
             }
         }
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: .bareIndented)
             
-            let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer)
+            let execution = Execution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
             
             step1(during: execution, logger: logger)
             
@@ -84,9 +90,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: .bareIndented)
             
-            let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
+            let execution = Execution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
             
             step1(during: execution, logger: logger)
             
@@ -97,7 +103,7 @@ import Foundation
                             beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
                                 beginning step step3a(during:logger:)@\(#file) (doing something in step3a)
                                     beginning step step4(during:logger:)@\(#file) (doing something in step4)
-                                        we are in step 4
+                we are in step 4
                                     ending step step4(during:logger:)@\(#file) (doing something in step4)
                                 ending step step3a(during:logger:)@\(#file) (doing something in step3a)
                                 beginning step step3b(during:logger:)@\(#file) (doing something in step3b)
@@ -123,9 +129,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: .bareIndented)
             
-            let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
+            let execution = Execution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
             
             step1(during: execution, logger: logger)
             
@@ -136,7 +142,7 @@ import Foundation
                             beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
                                 beginning step step3a(during:logger:)@\(#file) (doing something in step3a)
                                     beginning step step4(during:logger:)@\(#file) (doing something in step4)
-                                        we are in step 4
+                we are in step 4
                                     ending step step4(during:logger:)@\(#file) (doing something in step4)
                                 ending step step3a(during:logger:)@\(#file) (doing something in step3a)
                                 beginning step step3b(during:logger:)@\(#file) (doing something in step3b)
@@ -155,9 +161,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: .bareIndented)
             
-            let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
+            let execution = Execution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
             
             step1(during: execution, abortInStep2a: true, logger: logger)
             
@@ -168,7 +174,7 @@ import Foundation
                             beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
                                 beginning step step3a(during:logger:)@\(#file) (doing something in step3a)
                                     beginning step step4(during:logger:)@\(#file) (doing something in step4)
-                                        we are in step 4
+                we are in step 4
                                     ending step step4(during:logger:)@\(#file) (doing something in step4)
                                 ending step step3a(during:logger:)@\(#file) (doing something in step3a)
                                 aborting execution: for some reason

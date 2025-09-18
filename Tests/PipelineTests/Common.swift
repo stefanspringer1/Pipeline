@@ -2,7 +2,6 @@ import Pipeline
 
 protocol Logger {
     func log(_ message: String)
-    func log(_ message: String, indentation: String)
 }
 
 class CollectingLogger: Logger {
@@ -21,16 +20,18 @@ class CollectingLogger: Logger {
     
 }
 
-class ExecutionInfoConsumerForLogger: ExecutionInfoConsumer {
+class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: ExecutionInfoConsumer {
     
-    private var logger: Logger
+    var logger: Logger
+    var excutionInfoFormat: ExecutionInfoFormat
     
-    init(logger: Logger) {
+    init(logger: Logger, excutionInfoFormat: ExecutionInfoFormat = .full) {
         self.logger = logger
+        self.excutionInfoFormat = excutionInfoFormat
     }
     
-    func consume(_ executionInfo: ExecutionInfo, atLevel level: Int) {
-        logger.log(executionInfo.description, indentation: String(repeating: "    ", count: level))
+    func consume(_ executionInfo: ExecutionInfo<MetaData>) {
+        logger.log(executionInfo.description(executionInfoDescription: excutionInfoFormat))
     }
 }
 
@@ -41,14 +42,10 @@ class PrintingLogger: Logger {
         print(message)
     }
     
-    func log(_ message: String, indentation: String) {
-        print(indentation + message)
-    }
-    
 }
 
 // from README:
-class ExecutionInfoConsumerForLoggerWithContext: ExecutionInfoConsumer {
+class ExecutionInfoConsumerForLoggerWithContext<MetaData: CustomStringConvertible>: ExecutionInfoConsumer {
     
     private var logger: Logger
     let applicationName: String
@@ -62,12 +59,23 @@ class ExecutionInfoConsumerForLoggerWithContext: ExecutionInfoConsumer {
         self.workItemInfo = workItemInfo
     }
     
-    func consume(_ executionInfo: ExecutionInfo, atLevel level: Int) {
-        logger.log("\(applicationName): \(processID)/\(workItemInfo): \(String(repeating: "    ", count: level))\(executionInfo)")
+    func consume(_ executionInfo: ExecutionInfo<MetaData>) {
+        logger.log(executionInfo.description)
     }
 }
 
-class PrintingxecutionInfoConsumerWithContext: ExecutionInfoConsumer {
+struct MyMetaData: ExecutionMetaData {
+    
+    let applicationName: String
+    let processID: String
+    let workItemInfo: String
+    
+    var description: String {
+        "\(applicationName): \(processID)/\(workItemInfo)"
+    }
+}
+
+class PrintingxecutionInfoConsumerWithContext<MetaData: CustomStringConvertible>: ExecutionInfoConsumer {
     
     let applicationName: String
     let processID: String
@@ -79,7 +87,7 @@ class PrintingxecutionInfoConsumerWithContext: ExecutionInfoConsumer {
         self.workItemInfo = workItemInfo
     }
     
-    func consume(_ executionInfo: ExecutionInfo, atLevel level: Int) {
-        print("\(applicationName): \(processID)/\(workItemInfo): \(String(repeating: "    ", count: level))\(executionInfo)")
+    func consume(_ executionInfo: ExecutionInfo<MetaData>) {
+        print("\(applicationName): \(processID)/\(workItemInfo): \(executionInfo)")
     }
 }
