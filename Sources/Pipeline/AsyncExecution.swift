@@ -114,6 +114,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         let structuralID = UUID()
         synchronousExecution.executionInfoConsumer.consume(
             ExecutionInfo(
+                type: .progress,
                 metadata: synchronousExecution.metadata,
                 level: synchronousExecution.level,
                 structuralID: structuralID,
@@ -126,6 +127,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution._effectuationStack.removeLast()
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -165,6 +167,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         if synchronousExecution.activatedOptions?.contains(partName) != true || synchronousExecution.dispensedWith?.contains(partName) == true {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -178,6 +181,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         } else {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -192,6 +196,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution._effectuationStack.removeLast()
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -212,6 +217,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         if synchronousExecution.dispensedWith?.contains(partName) == true {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -225,6 +231,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         } else {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -239,6 +246,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution._effectuationStack.removeLast()
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -257,6 +265,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         if synchronousExecution._aborted {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -270,6 +279,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         } else if !synchronousExecution.executedSteps.contains(step) {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -285,6 +295,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         } else if synchronousExecution.forceValues.last == true {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -300,6 +311,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         } else {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -318,6 +330,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         let structuralID = UUID()
         synchronousExecution.executionInfoConsumer.consume(
             ExecutionInfo(
+                type: .progress,
                 metadata: synchronousExecution.metadata,
                 level: synchronousExecution.level,
                 structuralID: structuralID,
@@ -331,6 +344,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         synchronousExecution._effectuationStack.removeLast()
         synchronousExecution.executionInfoConsumer.consume(
             ExecutionInfo(
+                type: .progress,
                 metadata: synchronousExecution.metadata,
                 level: synchronousExecution.level,
                 structuralID: structuralID,
@@ -346,6 +360,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         if synchronousExecution._aborted {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -358,6 +373,7 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         } else {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,

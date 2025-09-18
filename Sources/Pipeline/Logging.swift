@@ -2,21 +2,21 @@ import Foundation
 
 extension Execution {
     
-    public func log(_ type: MessageType, _ message: String) {
+    public func log(_ type: InfoType, _ message: String) {
         executionInfoConsumer.consume(
             ExecutionInfo(
+                type: type,
                 metadata: metadata,
                 level: level,
                 structuralID: UUID(),
                 event: .message(
-                    type: type,
                     message: message
                 )
             )
         )
     }
     
-    public func log(_ type: MessageType, _ message: MultiLanguageText) {
+    public func log(_ type: InfoType, _ message: MultiLanguageText) {
         log(type, message.forLanguage(language))
     }
     
@@ -31,21 +31,21 @@ extension Execution {
 
 extension AsyncExecution {
     
-    public func log(_ type: MessageType, _ message: String) async {
+    public func log(_ type: InfoType, _ message: String) async {
         synchronousExecution.executionInfoConsumer.consume(
             ExecutionInfo(
+                type: type,
                 metadata: synchronousExecution.metadata,
                 level: synchronousExecution.level,
                 structuralID: UUID(),
                 event: .message(
-                    type: type,
                     message: message
                 )
             )
         )
     }
     
-    public func log(_ type: MessageType, _ message: MultiLanguageText) async {
+    public func log(_ type: InfoType, _ message: MultiLanguageText) async {
         await log(type, message.forLanguage(synchronousExecution.language))
     }
     
@@ -70,18 +70,18 @@ extension MultiLanguageText {
 public struct Message {
     
     public let id: String?
-    public let type: MessageType
+    public let type: InfoType
     public let fact: MultiLanguageText
     public let solution: MultiLanguageText?
     
-    public init(id: String?, type: MessageType, fact: MultiLanguageText, solution: MultiLanguageText? = nil) {
+    public init(id: String?, type: InfoType, fact: MultiLanguageText, solution: MultiLanguageText? = nil) {
         self.id = id
         self.type = type
         self.fact = fact
         self.solution = solution
     }
     
-    public func setting(type newType: MessageType) -> Message {
+    public func setting(type newType: InfoType) -> Message {
         return Message(id: id, type: newType, fact: fact, solution: solution)
     }
     
@@ -138,7 +138,7 @@ public extension String {
 // The message type that informs about the severity a message.
 //
 // It conforms to `Comparable` so there is an order of severity.
-public enum MessageType: Comparable, Codable, Sendable, Hashable {
+public enum InfoType: Comparable, Codable, Sendable, Hashable {
     
     /// Debugging information.
     case debug

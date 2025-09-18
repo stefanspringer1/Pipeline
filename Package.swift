@@ -35,6 +35,7 @@ let package = Package(
             ],
             swiftSettings: [
                 .enableUpcomingFeature("ConciseMagicFile"),
+                .enableUpcomingFeature("BareSlashRegexLiterals"),
             ]
         ),
     ]

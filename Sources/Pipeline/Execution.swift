@@ -72,6 +72,7 @@ public class Execution<MetaData: ExecutionMetaData> {
     public func abort(reason: String) {
         executionInfoConsumer.consume(
             ExecutionInfo(
+                type: .progress,
                 metadata: metadata,
                 level: level,
                 structuralID: UUID(),
@@ -130,6 +131,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         let structuralID = UUID()
         executionInfoConsumer.consume(
             ExecutionInfo(
+                type: .progress,
                 metadata: metadata,
                 level: level,
                 structuralID: structuralID,
@@ -142,6 +144,7 @@ public class Execution<MetaData: ExecutionMetaData> {
             _effectuationStack.removeLast()
             executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
@@ -181,6 +184,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         if activatedOptions?.contains(partName) != true || dispensedWith?.contains(partName) == true {
             executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
@@ -194,6 +198,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         } else {
             executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
@@ -208,6 +213,7 @@ public class Execution<MetaData: ExecutionMetaData> {
             _effectuationStack.removeLast()
             executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
@@ -228,6 +234,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         if dispensedWith?.contains(partName) == true {
             executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
@@ -241,6 +248,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         } else {
             executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
@@ -255,6 +263,7 @@ public class Execution<MetaData: ExecutionMetaData> {
             _effectuationStack.removeLast()
             executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
@@ -273,6 +282,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         if _aborted {
             executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
@@ -286,6 +296,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         } else if !executedSteps.contains(step) {
             executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
@@ -301,6 +312,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         } else if forceValues.last == true {
             executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
@@ -316,6 +328,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         } else {
             executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
@@ -334,6 +347,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         let structuralID = UUID()
         executionInfoConsumer.consume(
             ExecutionInfo(
+                type: .progress,
                 metadata: metadata,
                 level: level,
                 structuralID: structuralID,
@@ -347,6 +361,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         _effectuationStack.removeLast()
         executionInfoConsumer.consume(
             ExecutionInfo(
+                type: .progress,
                 metadata: metadata,
                 level: level,
                 structuralID: structuralID,
@@ -362,6 +377,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         if _aborted {
             executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
@@ -374,6 +390,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         } else {
             executionInfoConsumer.consume(
                 ExecutionInfo(
+                    type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,

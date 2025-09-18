@@ -66,6 +66,7 @@ public enum ExecutionInfoFormat {
 
 public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConvertible {
     
+    let type: InfoType
     let time: Date
     let metadata: MetaData
     let level: Int
@@ -73,12 +74,14 @@ public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConv
     let event: ExecutionEvent
     
     internal init(
+        type: InfoType,
         time: Date = Date.now,
         metadata: MetaData,
         level: Int,
         structuralID: UUID,
         event: ExecutionEvent
     ) {
+        self.type = type
         self.time = time
         self.metadata = metadata
         self.level = level
@@ -87,7 +90,7 @@ public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConv
     }
     
     public var description: String {
-        "\(time): \(metadata): \(String(repeating: "    ", count: level))\(event)"
+        "\(time): \(metadata): \(String(repeating: "    ", count: level)){\(type)} \(event)"
     }
     
     public func description(executionInfoDescription: ExecutionInfoFormat) -> String {
@@ -131,7 +134,7 @@ public enum ExecutionEvent: CustomStringConvertible {
     case beginningForcingSteps
     case endingForcingSteps
     
-    case message(type: MessageType, message: String)
+    case message(message: String)
     
     public var description: String {
         switch self {
@@ -167,8 +170,8 @@ public enum ExecutionEvent: CustomStringConvertible {
             "beginning forcing steps"
         case .endingForcingSteps:
             "ending forcing steps"
-        case .message(type: let type, message: let message):
-            "{\(type)} \(message)"
+        case .message(message: let message):
+            message
         }
     }
 }

@@ -106,7 +106,7 @@ import Foundation
                             beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
                                 beginning step step3a(during:)@\(#file) (doing something in step3a)
                                     beginning step step4(during:)@\(#file) (doing something in step4)
-                                        {info} we are in step 4
+                                        we are in step 4
                                     ending step step4(during:)@\(#file) (doing something in step4)
                                 ending step step3a(during:)@\(#file) (doing something in step3a)
                                 beginning step step3b(during:)@\(#file) (doing something in step3b)
@@ -145,7 +145,7 @@ import Foundation
                             beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
                                 beginning step step3a(during:)@\(#file) (doing something in step3a)
                                     beginning step step4(during:)@\(#file) (doing something in step4)
-                                        {info} we are in step 4
+                                        we are in step 4
                                     ending step step4(during:)@\(#file) (doing something in step4)
                                 ending step step3a(during:)@\(#file) (doing something in step3a)
                                 beginning step step3b(during:)@\(#file) (doing something in step3b)
@@ -177,7 +177,7 @@ import Foundation
                             beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
                                 beginning step step3a(during:)@\(#file) (doing something in step3a)
                                     beginning step step4(during:)@\(#file) (doing something in step4)
-                                        {info} we are in step 4
+                                        we are in step 4
                                     ending step step4(during:)@\(#file) (doing something in step4)
                                 ending step step3a(during:)@\(#file) (doing something in step3a)
                                 aborting execution: for some reason
