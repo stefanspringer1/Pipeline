@@ -59,7 +59,8 @@ extension Execution {
                 structuralID: UUID(),
                 event: .message(
                     message: message
-                )
+                ),
+                effectuationStack: effectuationStack
             )
         )
     }
@@ -98,7 +99,8 @@ extension AsyncExecution {
                 structuralID: UUID(),
                 event: .message(
                     message: message
-                )
+                ),
+                effectuationStack: synchronousExecution.effectuationStack
             )
         )
     }

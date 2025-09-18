@@ -71,10 +71,6 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
     
     public var aborted: Bool { synchronousExecution._aborted }
     
-    public var currentIndentation: String {
-        get async { synchronousExecution.currentIndentation }
-    }
-    
     /// Pausing the execution (without effect for async execution).
     public func pause() {
         synchronousExecution.semaphoreForPause.wait()
@@ -131,7 +127,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                 metadata: synchronousExecution.metadata,
                 level: synchronousExecution.level,
                 structuralID: structuralID,
-                event: .beginningForcingSteps
+                event: .beginningForcingSteps,
+                effectuationStack: synchronousExecution.effectuationStack
             )
         )
         synchronousExecution._effectuationStack.append(.forcing)
@@ -144,7 +141,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
-                    event: .endingForcingSteps
+                    event: .endingForcingSteps,
+                    effectuationStack: synchronousExecution.effectuationStack
                 )
             )
         }
@@ -187,7 +185,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                     event: .skippingOptionalPart(
                         name: partName,
                         description: description
-                    )
+                    ),
+                    effectuationStack: synchronousExecution.effectuationStack
                 )
             )
             result = nil
@@ -201,7 +200,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                     event: .beginningOptionalPart(
                         name: partName,
                         description: description
-                    )
+                    ),
+                    effectuationStack: synchronousExecution.effectuationStack
                 )
             )
             synchronousExecution._effectuationStack.append(.optionalPart(name: partName, description: description))
@@ -216,7 +216,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                     event: .endingOptionalPart(
                         name: partName,
                         description: description
-                    )
+                    ),
+                    effectuationStack: synchronousExecution.effectuationStack
                 )
             )
         }
@@ -237,7 +238,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                     event: .skippingDispensablePart(
                         name: partName,
                         description: description
-                    )
+                    ),
+                    effectuationStack: synchronousExecution.effectuationStack
                 )
             )
             result = nil
@@ -251,7 +253,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                     event: .beginningDispensablePart(
                         name: partName,
                         description: description
-                    )
+                    ),
+                    effectuationStack: synchronousExecution.effectuationStack
                 )
             )
             synchronousExecution._effectuationStack.append(.dispensablePart(name: partName, description: description))
@@ -266,7 +269,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                     event: .endingDispensablePart(
                         name: partName,
                         description: description
-                    )
+                    ),
+                    effectuationStack: synchronousExecution.effectuationStack
                 )
             )
         }
@@ -290,7 +294,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                     event: .skippingStepInAbortedExecution(
                         id: step,
                         description: description
-                    )
+                    ),
+                    effectuationStack: synchronousExecution.effectuationStack
                 )
             )
             return (execute: false, forced: false, structuralID: structuralID)
@@ -305,7 +310,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                         id: step,
                         description: description,
                         forced: false
-                    )
+                    ),
+                    effectuationStack: synchronousExecution.effectuationStack
                 )
             )
             synchronousExecution.executedSteps.insert(step)
@@ -321,7 +327,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                         id: step,
                         description: description,
                         forced: true
-                    )
+                    ),
+                    effectuationStack: synchronousExecution.effectuationStack
                 )
             )
             synchronousExecution.executedSteps.insert(step)
@@ -336,7 +343,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                     event: .skippingPreviouslyExecutedStep(
                         id: step,
                         description: description
-                    )
+                    ),
+                    effectuationStack: synchronousExecution.effectuationStack
                 )
             )
             return (execute: false, forced: false, structuralID: structuralID)
@@ -354,7 +362,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                 structuralID: structuralID,
                 event: .beginningDescribedPart(
                     description: description
-                )
+                ),
+                effectuationStack: synchronousExecution.effectuationStack
             )
         )
         synchronousExecution._effectuationStack.append(.describedPart(description: description))
@@ -368,7 +377,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                 structuralID: structuralID,
                 event: .endingDescribedPart(
                     description: description
-                )
+                ),
+                effectuationStack: synchronousExecution.effectuationStack
             )
         )
         return result
@@ -385,7 +395,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                     event: .abortedStep(
                         id: step,
                         description: description
-                    )
+                    ),
+                    effectuationStack: synchronousExecution.effectuationStack
                 )
             )
         } else {
@@ -399,7 +410,8 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
                         id: step,
                         description: description,
                         forced: forced
-                    )
+                    ),
+                    effectuationStack: synchronousExecution.effectuationStack
                 )
             )
         }

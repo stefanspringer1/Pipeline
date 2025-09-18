@@ -11,6 +11,57 @@ import Localization
         workItemInfo: "item123"
     )
     
+    @Test func testExecutionPath() throws {
+        
+        func step1<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>) {
+            execution.effectuate("doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                step2(during: execution)
+            }
+        }
+        
+        func step2<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>) {
+            execution.effectuate("doing something in step2", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                execution.log(.info, "hello")
+                #expect(execution.executionPath == "step step1(during:)@\(#file.firstPathPart) -> step step2(during:)@\(#file.firstPathPart)")
+                execution.dispensable(named: "we might dispense with step 3") {
+                    #expect(execution.executionPath == "step step1(during:)@\(#file.firstPathPart) -> step step2(during:)@\(#file.firstPathPart) -> dispensable part \"we might dispense with step 3\"")
+                    step3(during: execution)
+                }
+            }
+        }
+        
+        func step3<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>) {
+            execution.effectuate("doing something in step3", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                execution.force {
+                    execution.log(.info, "hello again")
+                }
+            }
+        }
+        
+        let logger = CollectingLogger()
+        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true, withType: true, withExecutionPath: true))
+        
+        let execution = Execution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
+        
+        step1(during: execution)
+        
+        #expect(logger.messages.joined(separator: "\n") == """
+            {progress} beginning step step1(during:)@PipelineTests (doing something in step1)
+                {progress} beginning step step2(during:)@PipelineTests (doing something in step2) [@@ step step1(during:)@PipelineTests -> ]
+                    {info} hello [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests]
+                    {progress} beginning dispensible part "we might dispense with step 3" [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> ]
+                        {progress} beginning step step3(during:)@PipelineTests (doing something in step3) [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> dispensable part "we might dispense with step 3" -> ]
+                            {progress} beginning forcing steps [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> dispensable part "we might dispense with step 3" -> step step3(during:)@PipelineTests -> ]
+                                {info} hello again [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> dispensable part "we might dispense with step 3" -> step step3(during:)@PipelineTests -> forcing]
+                            {progress} ending forcing steps [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> dispensable part "we might dispense with step 3" -> step step3(during:)@PipelineTests -> ]
+                        {progress} ending step step3(during:)@PipelineTests (doing something in step3) [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> dispensable part "we might dispense with step 3" -> ]
+                    {progress} ending dispensible part "we might dispense with step 3" [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> ]
+                {progress} ending step step2(during:)@PipelineTests (doing something in step2) [@@ step step1(during:)@PipelineTests -> ]
+            {progress} ending step step1(during:)@PipelineTests (doing something in step1)
+            """
+        )
+    }
+    
     @Test func testMessage1() throws {
         
         let logger = CollectingLogger()
@@ -38,7 +89,7 @@ import Localization
         let logger = CollectingLogger()
         
         // NOTE: `excutionInfoFormat: .bareIndented` added:
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: .bareIndented)
+        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
         
         // NOTE: `language: .de` added:
         let execution = Execution<MyMetaData>(language: .de, metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
@@ -66,7 +117,7 @@ import Localization
         
         let logger = CollectingLogger()
         
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: .bareWithInfoType)
+        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withType: true))
         
         // NOTE: `language: .de` added:
         let execution = Execution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
@@ -97,7 +148,7 @@ import Localization
         
         let logger = CollectingLogger()
         
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: .bareWithInfoType)
+        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withType: true))
         
         // NOTE: `language: .de` added:
         let execution = AsyncExecution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)

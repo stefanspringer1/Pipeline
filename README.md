@@ -294,7 +294,7 @@ func a_step<MetaData: ExecutionMetaData>(
 **Convention**
 
 - A function representing a step is a top-level function.
-- Use the function signature available via `"\(#function)@\(#file)"` as the identifier in the call of the `effectuate` method.
+- Use the function signature available via `"\(#function)@\(#file.firstPathPart)"` as the identifier in the call of the `effectuate` method.
 
 ---
 

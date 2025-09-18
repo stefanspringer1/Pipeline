@@ -23,15 +23,19 @@ class CollectingLogger: Logger {
 class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: ExecutionInfoConsumer {
     
     var logger: Logger
-    var excutionInfoFormat: ExecutionInfoFormat
+    var excutionInfoFormat: ExecutionInfoFormat?
     
-    init(logger: Logger, excutionInfoFormat: ExecutionInfoFormat = .full) {
+    init(logger: Logger, excutionInfoFormat: ExecutionInfoFormat? = nil) {
         self.logger = logger
         self.excutionInfoFormat = excutionInfoFormat
     }
     
     func consume(_ executionInfo: ExecutionInfo<MetaData>) {
-        logger.log(executionInfo.description(executionInfoDescription: excutionInfoFormat))
+        if let excutionInfoFormat {
+            logger.log(executionInfo.description(format: excutionInfoFormat))
+        } else {
+            logger.log(executionInfo.description)
+        }
     }
 }
 
@@ -69,5 +73,11 @@ class PrintingxecutionInfoConsumerWithContext<MetaData: CustomStringConvertible>
     
     func consume(_ executionInfo: ExecutionInfo<MetaData>) {
         print("\(applicationName): \(processID)/\(workItemInfo): \(executionInfo)")
+    }
+}
+
+extension String {
+    var firstPathPart: Substring {
+        self.split(separator: "/", omittingEmptySubsequences: false).first!
     }
 }

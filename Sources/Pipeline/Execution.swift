@@ -79,7 +79,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                 structuralID: UUID(),
                 event: .abortingExecution(
                     reason: reason
-                )
+                ),
+                effectuationStack: effectuationStack
             )
         )
         _aborted = true
@@ -89,8 +90,6 @@ public class Execution<MetaData: ExecutionMetaData> {
     
     var forceValues = [Bool]()
     var appeaseTypes = [InfoType]()
-    
-    public var currentIndentation: String { String(repeating: "    ", count: level) }
     
     let semaphoreForPause = DispatchSemaphore(value: 1)
     
@@ -149,7 +148,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                 metadata: metadata,
                 level: level,
                 structuralID: structuralID,
-                event: .beginningForcingSteps
+                event: .beginningForcingSteps,
+                effectuationStack: effectuationStack
             )
         )
         _effectuationStack.append(.forcing)
@@ -162,7 +162,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
-                    event: .endingForcingSteps
+                    event: .endingForcingSteps,
+                    effectuationStack: effectuationStack
                 )
             )
         }
@@ -205,7 +206,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                     event: .skippingOptionalPart(
                         name: partName,
                         description: description
-                    )
+                    ),
+                    effectuationStack: effectuationStack
                 )
             )
             result = nil
@@ -219,7 +221,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                     event: .beginningOptionalPart(
                         name: partName,
                         description: description
-                    )
+                    ),
+                    effectuationStack: effectuationStack
                 )
             )
             _effectuationStack.append(.optionalPart(name: partName, description: description))
@@ -234,7 +237,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                     event: .endingOptionalPart(
                         name: partName,
                         description: description
-                    )
+                    ),
+                    effectuationStack: effectuationStack
                 )
             )
         }
@@ -255,7 +259,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                     event: .skippingDispensablePart(
                         name: partName,
                         description: description
-                    )
+                    ),
+                    effectuationStack: effectuationStack
                 )
             )
             result = nil
@@ -269,7 +274,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                     event: .beginningDispensablePart(
                         name: partName,
                         description: description
-                    )
+                    ),
+                    effectuationStack: effectuationStack
                 )
             )
             _effectuationStack.append(.dispensablePart(name: partName, description: description))
@@ -284,7 +290,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                     event: .endingDispensablePart(
                         name: partName,
                         description: description
-                    )
+                    ),
+                    effectuationStack: effectuationStack
                 )
             )
         }
@@ -308,7 +315,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                     event: .skippingStepInAbortedExecution(
                         id: step,
                         description: description
-                    )
+                    ),
+                    effectuationStack: effectuationStack
                 )
             )
             return (execute: false, forced: false, structuralID: structuralID)
@@ -323,7 +331,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                         id: step,
                         description: description,
                         forced: false
-                    )
+                    ),
+                    effectuationStack: effectuationStack
                 )
             )
             executedSteps.insert(step)
@@ -339,7 +348,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                         id: step,
                         description: description,
                         forced: true
-                    )
+                    ),
+                    effectuationStack: effectuationStack
                 )
             )
             executedSteps.insert(step)
@@ -354,7 +364,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                     event: .skippingPreviouslyExecutedStep(
                         id: step,
                         description: description
-                    )
+                    ),
+                    effectuationStack: effectuationStack
                 )
             )
             return (execute: false, forced: false, structuralID: structuralID)
@@ -372,7 +383,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                 structuralID: structuralID,
                 event: .beginningDescribedPart(
                     description: description
-                )
+                ),
+                effectuationStack: effectuationStack
             )
         )
         _effectuationStack.append(.describedPart(description: description))
@@ -386,7 +398,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                 structuralID: structuralID,
                 event: .endingDescribedPart(
                     description: description
-                )
+                ),
+                effectuationStack: effectuationStack
             )
         )
         return result
@@ -403,7 +416,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                     event: .abortedStep(
                         id: step,
                         description: description
-                    )
+                    ),
+                    effectuationStack: effectuationStack
                 )
             )
         } else {
@@ -417,7 +431,8 @@ public class Execution<MetaData: ExecutionMetaData> {
                         id: step,
                         description: description,
                         forced: forced
-                    )
+                    ),
+                    effectuationStack: effectuationStack
                 )
             )
         }

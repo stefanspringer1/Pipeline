@@ -19,7 +19,7 @@ public struct StepID: Hashable, CustomStringConvertible, Sendable {
         self.functionSignature = functionSignature
     }
     
-    public var description: String { "\(functionSignature)@\(crossModuleFileDesignation)" }
+    public var description: String { "\(functionSignature)@\(crossModuleFileDesignation.split(separator: "/", omittingEmptySubsequences: false).first!)" }
 }
 
 public let stepPrefix = "step "
@@ -36,13 +36,21 @@ public enum Effectuation: CustomStringConvertible, Sendable {
     case forcing
     
     public var description: String {
+        description(withDescription: true)
+    }
+    
+    public var short: String {
+        description(withDescription: false)
+    }
+    
+    public func description(withDescription: Bool) -> String {
         switch self {
         case .step(step: let step, description: let description):
-            return "\(stepPrefix)\(step.description)\(description != nil ? " (\(description!))" : "")"
+            return "\(stepPrefix)\(step)\(withDescription && description != nil ? " (\(description!))" : "")"
         case .dispensablePart(name: let id, description: let description):
-            return "\(dispensablePartPrefix)\"\(id)\"\(description != nil ? " (\(description!))" : "")"
+            return "\(dispensablePartPrefix)\"\(id)\"\(withDescription && description != nil ? " (\(description!))" : "")"
         case .optionalPart(name: let id, description: let description):
-            return "\(optionalPartPrefix)\"\(id)\"\(description != nil ? " (\(description!))" : "")"
+            return "\(optionalPartPrefix)\"\(id)\"\(withDescription && description != nil ? " (\(description!))" : "")"
         case .describedPart(description: let description):
             return "\(describedPartPrefix)\"\(description)\""
         case .forcing:
@@ -53,18 +61,38 @@ public enum Effectuation: CustomStringConvertible, Sendable {
 }
 
 extension Array where Element == Effectuation {
-    var executionPath: String {
-        self.map{ $0.description }.joined(separator: " -> ")
+    
+    var executionPathForEffectuation: String {
+        self.map{ $0.short + " -> " }.joined()
     }
+    
+    var executionPath: String {
+        self.map{ $0.short }.joined(separator: " -> ")
+    }
+    
 }
 
-public enum ExecutionInfoFormat {
-    case full
-    case bare
-    case bareWithInfoType
-    case bareIndented
-    case bareWithInfoTypeIndented
-    case withoutTime
+public struct ExecutionInfoFormat {
+    
+    let withTime: Bool
+    let withMetaData: Bool
+    let withIndentation: Bool
+    let withType: Bool
+    let withExecutionPath: Bool
+    
+    public init(
+        withTime: Bool = false,
+        withMetaData: Bool = false,
+        withIndentation: Bool = false,
+        withType: Bool = false,
+        withExecutionPath: Bool = false
+    ) {
+        self.withTime = withTime
+        self.withMetaData = withMetaData
+        self.withIndentation = withIndentation
+        self.withType = withType
+        self.withExecutionPath = withExecutionPath
+    }
 }
 
 public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConvertible {
@@ -76,6 +104,9 @@ public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConv
     let level: Int
     let structuralID: UUID
     let event: ExecutionEvent
+    let effectuationStack: [Effectuation]
+    
+    public func isMessage() -> Bool { if case .message = event { true } else { false } }
     
     internal init(
         type: InfoType,
@@ -84,7 +115,8 @@ public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConv
         metadata: MetaData,
         level: Int,
         structuralID: UUID,
-        event: ExecutionEvent
+        event: ExecutionEvent,
+        effectuationStack: [Effectuation]
     ) {
         self.type = type
         self.originalType = originalType
@@ -93,53 +125,46 @@ public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConv
         self.level = level
         self.structuralID = structuralID
         self.event = event
+        self.effectuationStack = effectuationStack
     }
     
     public var description: String {
-        "\(time): \(descriptionWithoutTime)"
+        return description(
+            withTime: true,
+            withMetaData: true,
+            withIndentation: true,
+            withType: true,
+            withExecutionPath: true
+        )
     }
     
-    public var descriptionWithoutTime: String {
-        "\(metadata): \(String(repeating: "    ", count: level)){\(type)} \(event)"
+    public func description(
+        withTime: Bool = false,
+        withMetaData: Bool = false,
+        withIndentation: Bool = false,
+        withType: Bool = false,
+        withExecutionPath: Bool
+    ) -> String {
+        [
+            withTime ? "\(time.description):" : nil,
+            withMetaData ? "\(metadata):" : nil,
+            withIndentation && level > 0 ? "\(String(repeating: " ", count: level * 4 - 1))" : nil,
+            withType ? "{\(type)}" : nil,
+            event.description,
+            withExecutionPath && !effectuationStack.isEmpty ? "[@@ \(isMessage() ? effectuationStack.executionPath : effectuationStack.executionPathForEffectuation)]" : nil
+        ].compactMap({ $0 }).joined(separator: " ")
     }
     
-    public var bare: String {
-        event.description
+    public func description(format executionInfoFormat: ExecutionInfoFormat) -> String {
+        description(
+            withTime: executionInfoFormat.withTime,
+            withMetaData: executionInfoFormat.withMetaData,
+            withIndentation: executionInfoFormat.withIndentation,
+            withType: executionInfoFormat.withType,
+            withExecutionPath: executionInfoFormat.withExecutionPath
+        )
     }
     
-    public var bareWithInfoType: String {
-        "{\(type)} \(bare)"
-    }
-    
-    public var bareIndented: String {
-        "\(String(repeating: "    ", count: level))\(bare)"
-    }
-    
-    public var bareWithInfoTypeIndented: String {
-        "\(String(repeating: "    ", count: level)){\(type)} \(bare)"
-    }
-    
-    public func description(executionInfoDescription: ExecutionInfoFormat) -> String {
-        switch executionInfoDescription {
-        case .full:
-            description
-        case .bare:
-            event.description
-        case .bareWithInfoType:
-            bareWithInfoType
-        case .bareIndented:
-            bareIndented
-        case .withoutTime:
-            descriptionWithoutTime
-        case .bareWithInfoTypeIndented:
-            bareWithInfoTypeIndented
-        }
-        
-    }
-    
-    public var bareIndentedDescription: String {
-        "\(String(repeating: "    ", count: level))\(event)"
-    }
 }
 
 public enum ExecutionEvent: CustomStringConvertible {
