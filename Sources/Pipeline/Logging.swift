@@ -1,11 +1,58 @@
 import Foundation
 
+// The message type that informs about the severity a message.
+//
+// It conforms to `Comparable` so there is an order of severity.
+public enum InfoType: Comparable, Codable, Sendable, Hashable {
+    
+    /// Debugging information.
+    case debug
+    
+    /// Information about the progress (e.g. the steps being executed).
+    case progress
+    
+    /// Information from the processing.
+    case info
+    
+    /// Information about the execution for a work item, e.g. starting.
+    case iteration
+    
+    /// Warnings from the processing.
+    case warning
+    
+    /// Errors from the processing.
+    case error
+    
+    /// A fatal error, the execution (for the data item being processed) is
+    /// then abandoned.
+    case fatal
+    
+    /// The program or process that has been startet to be in charge for
+    /// the whole processing of a work item is lost (crashed or hanging).
+    case loss
+    
+    /// A deadly error, i.e. not only the processing for one work item
+    /// has to be abandoned, but the whole processing cannot continue.
+    case deadly
+
+}
+
 extension Execution {
     
     public func log(_ type: InfoType, _ message: String) {
+        let actualType: InfoType
+        let orginalType: InfoType?
+        if let appeaseType = appeaseTypes.last, type > appeaseType {
+            actualType = appeaseType
+            orginalType = type
+        } else {
+            actualType = type
+            orginalType = nil
+        }
         executionInfoConsumer.consume(
             ExecutionInfo(
-                type: type,
+                type: actualType,
+                originalType: orginalType,
                 metadata: metadata,
                 level: level,
                 structuralID: UUID(),
@@ -32,9 +79,19 @@ extension Execution {
 extension AsyncExecution {
     
     public func log(_ type: InfoType, _ message: String) async {
+        let actualType: InfoType
+        let orginalType: InfoType?
+        if let appeaseType = synchronousExecution.appeaseTypes.last, type > appeaseType {
+            actualType = appeaseType
+            orginalType = type
+        } else {
+            actualType = type
+            orginalType = nil
+        }
         synchronousExecution.executionInfoConsumer.consume(
             ExecutionInfo(
-                type: type,
+                type: actualType,
+                originalType: orginalType,
                 metadata: synchronousExecution.metadata,
                 level: synchronousExecution.level,
                 structuralID: UUID(),
@@ -133,43 +190,6 @@ public extension String {
         filling(withArguments: arguments)
     }
     
-}
-
-// The message type that informs about the severity a message.
-//
-// It conforms to `Comparable` so there is an order of severity.
-public enum InfoType: Comparable, Codable, Sendable, Hashable {
-    
-    /// Debugging information.
-    case debug
-    
-    /// Information about the progress (e.g. the steps being executed).
-    case progress
-    
-    /// Information from the processing.
-    case info
-    
-    /// Information about the execution for a work item, e.g. starting.
-    case iteration
-    
-    /// Warnings from the processing.
-    case warning
-    
-    /// Errors from the processing.
-    case error
-    
-    /// A fatal error, the execution (for the data item being processed) is
-    /// then abandoned.
-    case fatal
-    
-    /// The program or process that has been startet to be in charge for
-    /// the whole processing of a work item is lost (crashed or hanging).
-    case loss
-    
-    /// A deadly error, i.e. not only the processing for one work item
-    /// has to be abandoned, but the whole processing cannot continue.
-    case deadly
-
 }
 
 // Uses ISO language codes.

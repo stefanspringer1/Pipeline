@@ -61,12 +61,16 @@ extension Array where Element == Effectuation {
 public enum ExecutionInfoFormat {
     case full
     case bare
+    case bareWithInfoType
     case bareIndented
+    case bareWithInfoTypeIndented
+    case withoutTime
 }
 
 public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConvertible {
     
     let type: InfoType
+    let originalType: InfoType? // non-appeased
     let time: Date
     let metadata: MetaData
     let level: Int
@@ -75,6 +79,7 @@ public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConv
     
     internal init(
         type: InfoType,
+        originalType: InfoType? = nil,
         time: Date = Date.now,
         metadata: MetaData,
         level: Int,
@@ -82,6 +87,7 @@ public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConv
         event: ExecutionEvent
     ) {
         self.type = type
+        self.originalType = originalType
         self.time = time
         self.metadata = metadata
         self.level = level
@@ -90,7 +96,27 @@ public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConv
     }
     
     public var description: String {
-        "\(time): \(metadata): \(String(repeating: "    ", count: level)){\(type)} \(event)"
+        "\(time): \(descriptionWithoutTime)"
+    }
+    
+    public var descriptionWithoutTime: String {
+        "\(metadata): \(String(repeating: "    ", count: level)){\(type)} \(event)"
+    }
+    
+    public var bare: String {
+        event.description
+    }
+    
+    public var bareWithInfoType: String {
+        "{\(type)} \(bare)"
+    }
+    
+    public var bareIndented: String {
+        "\(String(repeating: "    ", count: level))\(bare)"
+    }
+    
+    public var bareWithInfoTypeIndented: String {
+        "\(String(repeating: "    ", count: level)){\(type)} \(bare)"
     }
     
     public func description(executionInfoDescription: ExecutionInfoFormat) -> String {
@@ -99,8 +125,14 @@ public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConv
             description
         case .bare:
             event.description
+        case .bareWithInfoType:
+            bareWithInfoType
         case .bareIndented:
-            "\(String(repeating: "    ", count: level))\(event)"
+            bareIndented
+        case .withoutTime:
+            descriptionWithoutTime
+        case .bareWithInfoTypeIndented:
+            bareWithInfoTypeIndented
         }
         
     }

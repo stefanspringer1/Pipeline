@@ -87,6 +87,7 @@ public class Execution<MetaData: ExecutionMetaData> {
     public var aborted: Bool { _aborted }
     
     var forceValues = [Bool]()
+    var appeaseTypes = [InfoType]()
     
     public var currentIndentation: String { String(repeating: "    ", count: level) }
     
@@ -112,9 +113,18 @@ public class Execution<MetaData: ExecutionMetaData> {
     }
     
     /// Force all contained work to be executed, even if already executed before.
-    fileprivate func execute<T>(step: StepID?, description: String?, force: Bool, work: () throws -> T) rethrows -> T {
+    fileprivate func execute<T>(
+        step: StepID?,
+        description: String?,
+        force: Bool,
+        appeaseTo appeaseType: InfoType? = nil,
+        work: () throws -> T
+    ) rethrows -> T {
         waitNotPaused() // wait if the execution is paused
         forceValues.append(force)
+        if let appeaseType {
+            appeaseTypes.append(appeaseType)
+        }
         if let step {
             _effectuationStack.append(.step(step: step, description: description))
         }
@@ -123,6 +133,9 @@ public class Execution<MetaData: ExecutionMetaData> {
             _effectuationStack.removeLast()
         }
         forceValues.removeLast()
+        if appeaseType != nil {
+            appeaseTypes.removeLast()
+        }
         return result
     }
     
@@ -275,6 +288,11 @@ public class Execution<MetaData: ExecutionMetaData> {
             )
         }
         return result
+    }
+    
+    /// Make worse message type than `Error` to type `Error` in contained calls.
+    public func appease<T>(to appeaseType: InfoType? = .error, work: () throws -> T) rethrows -> T? {
+        try execute(step: nil, description: nil, force: false, appeaseTo: appeaseType, work: work)
     }
     
     private func effectuateTest(forStep step: StepID, withDescription description: String?) -> (execute: Bool, forced: Bool, structuralID: UUID) {

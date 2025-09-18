@@ -95,9 +95,18 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
     }
     
     /// Force all contained work to be executed, even if already executed before.
-    fileprivate func execute<T>(step: StepID?, description: String?, force: Bool, work: () async throws -> T) async rethrows -> T {
+    fileprivate func execute<T>(
+        step: StepID?,
+        description: String?,
+        force: Bool,
+        appeaseTo appeaseType: InfoType? = nil,
+        work: () async throws -> T
+    ) async rethrows -> T {
         waitNotPaused() // wait if the execution is paused
         synchronousExecution.forceValues.append(force)
+        if let appeaseType {
+            synchronousExecution.appeaseTypes.append(appeaseType)
+        }
         if let step {
             synchronousExecution._effectuationStack.append(.step(step: step, description: description))
         }
@@ -106,6 +115,9 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution._effectuationStack.removeLast()
         }
         synchronousExecution.forceValues.removeLast()
+        if appeaseType != nil {
+            synchronousExecution.appeaseTypes.removeLast()
+        }
         return result
     }
     
@@ -258,6 +270,11 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
             )
         }
         return result
+    }
+    
+    /// Make worse message type than `Error` to type `Error` in contained calls.
+    public func appease<T>(to appeaseType: InfoType? = .error, work: () async throws -> T) async rethrows -> T? {
+        try await execute(step: nil, description: nil, force: false, appeaseTo: appeaseType, work: work)
     }
     
     private func effectuateTest(forStep step: StepID, withDescription description: String?) async -> (execute: Bool, forced: Bool, structuralID: UUID) {
