@@ -2,9 +2,13 @@
 
 A simple framework for constructing a pipeline to process a single work item.
 
-The framework helps to define a complex processing of one “work item” that can be executed within an `Execution` environment. For each work item a separate `Execution` instance has to be created. If more than one work item is to be processed, then more than one `Execution` instance has to be used.
+The idea is that there is now fixed scheme for how to compose steps of a processing pipeline, as any scheme that one could think of might not be flexible enough. Instead, the concept is that is only “functions calling functions”, but certain function are steps. So you get waht you need to define, control and log a processing pipeline, but with maximal flexibiliy and also in an efficnet way.
 
-The logging is not part of this framework, but the processing information of the pipeline can be used for logging.
+You define a complex processing of one “work item” that can be executed within an `Execution` environment. For each work item a separate `Execution` instance has to be created. If more than one work item is to be processed, then more than one `Execution` instance has to be used.
+
+The logging is thought to be independant from some specific logging implemetation. So no actual logging implemenatation is provided, but it also means that teh logging used by packages should be formulated without any reliance on an actual logging implemenatation. So there is some functionality provided here to make this possible. E.g. various messsage types (error, info, etc.) are provided (more than most actual logging implementations provide) and you have to then match them to the message types provided by logging implementations used by your application.
+
+This flexibility also applies to metadata such as information about the work item or some process ID. The `Execution` described below demand some metadata, but the type of this metadata can be of any kind as long as the protocol `ExecutionMetaData` is fullfilled, which in the current version of package just means the metadata has to conform to `CustomStringConvertible` (to get a textual description) and `Sendable`.
 
 The framework can also handle asynchronous calls (see the section about working in asynchronous contexts).
 
@@ -59,7 +63,6 @@ You need an instance conforming to `ExecutionInfoConsumer`, e.g.:
 ```Swift
 protocol Logger {
     func log(_ message: String)
-    func log(_ message: String, indentation: String)
 }
 
 class PrintingLogger: Logger {
@@ -68,74 +71,66 @@ class PrintingLogger: Logger {
         print(message)
     }
     
-    func log(_ message: String, indentation: String) {
-        print(indentation + message)
-    }
-    
 }
 
-class ExecutionInfoConsumerForLogger: ExecutionInfoConsumer {
+class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: ExecutionInfoConsumer {
     
-    private var logger: Logger
+    var logger: Logger
+    var excutionInfoFormat: ExecutionInfoFormat
     
-    init(logger: Logger) {
+    init(logger: Logger, excutionInfoFormat: ExecutionInfoFormat = .full) {
         self.logger = logger
+        self.excutionInfoFormat = excutionInfoFormat
     }
     
-    func consume(_ executionInfo: ExecutionInfo, atLevel level: Int) {
-        logger.log(executionInfo.description, indentation: String(repeating: "    ", count: level))
+    func consume(_ executionInfo: ExecutionInfo<MetaData>) {
+        logger.log(executionInfo.description(executionInfoDescription: excutionInfoFormat))
     }
 }
 ```
 
-Note that the protocol `Logger` used here is just for the examples, you can use any logger you like, you just have to construct an according `ExecutionInfoConsumer`.
-
-Instead of the predefined `executionInfo.description`, you can of course format the content of an `ExecutionInfo` or part of it as you like.
-
-The information about the process or the work in question is nothing that the Pipeline framework has to be concerned with, it could be considered in the following way:
+You also need some metadata, e.g.:
 
 ```Swift
-class ExecutionInfoConsumerForLoggerWithContext: ExecutionInfoConsumer {
+struct MyMetaData: ExecutionMetaData {
     
-    private var logger: Logger
     let applicationName: String
     let processID: String
     let workItemInfo: String
-
-    init(logger: Logger, applicationName: String, processID: String, forWorkItem workItemInfo: String) {
-        self.logger = logger
-        self.applicationName = applicationName
-        self.processID = processID
-        self.workItemInfo = workItemInfo
-    }
     
-    func consume(_ executionInfo: ExecutionInfo, atLevel level: Int) {
-        logger.log("\(applicationName): \(processID)/\(workItemInfo): \(String(repeating: "    ", count: level))\(executionInfo)")
+    var description: String {
+        "\(applicationName): \(processID)/\(workItemInfo)"
     }
 }
+
+let metadata = MyMetaData(
+    applicationName: "myapp",
+    processID: "precess123",
+    workItemInfo: "item123"
+)
 ```
 
 Then, for each work item that you want to process (whatever your work items might be, maybe you have only one work item so you do not need a for loop), use a new `Execution` object:
 
 ```Swift
 let logger = PrintingLogger()
-let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(logger: logger)
+let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger)
 
-let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer)
+let execution = Execution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
 ```
 
 The step you call (in the following example: `myWork_step`) might have any other arguments besides the `Execution` and some logger, and the postfix `_step` is only for convention. Your step might be implemented as follows:
 
 ```Swift
-func myWork_step(
-    during execution: Execution,
-    logger: Logger
-) {
-    execution.effectuate("doing this and that", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+func myWork_step<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>) {
+    execution.effectuate(
+        "...here a description can be added...",
+        checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)
+    ) {
         
         // ... some other code...
         
-        myOther_step(during: execution)
+        myOther_step<MetaData: ExecutionMetaData>(during: execution)
         
         // ... some other code...
         
@@ -147,6 +142,20 @@ func myWork_step(
 
 I.e. you embrace the content of your function inside a `execution.effectuate` call so that the `Execution` instance can control and inform about the execution of your code. The `StepID` instance is used as a unique identifier for your step.
 
+---
+
+NOTE:
+
+There is also a macro to just annotate a function with `@Step` so you do not have to add the `execution.effectuate` code yourself, but there are still an issue with this macro that needs to resolved (the placement of error annotations is not correct).
+
+---
+
+The call of this step is then as follows:
+
+```Swift
+myWork_step(during: execution)
+```
+
 _Note that in order to be able to use future enhancemants of the library, you should not have code outside this single call of `effectuate` in your function!_
 
 Inside your step you might call other steps. In the example above, `myOther_step` has the same arguments as `myWork_step`, but in the general case, this does not have to be this way. On the contrary, our recommendation is to only give to each step the data that it really needs.
@@ -155,7 +164,7 @@ If you call `myOther_step` inside `myWork_step` as in the example above, `myOthe
 
 ```Swift
 execution.force {
-    myOther_step(during: execution)
+    myOther_step<(during: execution)
 }
 ```
 
@@ -170,7 +179,7 @@ execution.disremember {
 There are also be named optional parts that can be activated by adding an according value to the `withOptions` value in the initializer of the `Execution` instance:
 
 ```Swift
-execution.optional(named: "module1:myOther_step", description: "...this is a description...") {
+execution.optional(named: "module1:myOther_step", description: "...here a description can be added...") {
         myOther_step(during: execution)
 }
 ```
@@ -178,7 +187,7 @@ execution.optional(named: "module1:myOther_step", description: "...this is a des
 On the contrary, if you regard a step at a certain point or more generally a certain code block as something dispensable (i.e. the rest of the application does not suffer from inconsistencies if this part does not get executed), use the following code: 
 
 ```Swift
-execution.dispensable(named: "module1:myOther_step", description: "...this is a description...")) {
+execution.dispensable(named: "module1:myOther_step", description: "...here a description can be added...")) {
         myOther_step(during: execution)
 }
 ```
@@ -269,14 +278,13 @@ We say that a step “gets executed” when we actually mean that the statements
 A step fullfilling "task a" is to be formulated as follows. In the example below, `data` is the instance of a class being changed during the execution (of cource, our steps could also return a value, and different interacting steps can have different arguments). The execution keeps track of the steps run by using _a unique identifier for each step._ An instance of `StepID` is used as such an identifier, which contains a) a designation for the file that is unique across modules (using [concise magic file name](https://github.com/apple/swift-evolution/blob/main/proposals/0274-magic-file.md)), and b) using the function signature which is unique when using only top-level functions as steps.
 
 ```Swift
-func a_step(
-    during execution: Execution,
-    data: MyData,
-    logger: Logger
+func a_step<MetaData: ExecutionMetaData>(
+    during execution: Execution<MetaData>,
+    data: MyData
 ) {
     execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
         
-        logger.log("working in step a")
+            execution.log(.info, "working in step a")
         
     }
 }
@@ -293,16 +301,16 @@ func a_step(
 Let us see how we call the step `a_step` inside another step `b_step`:
 
 ```Swift
-func b_step(
-    during execution: Execution,
-    data: MyData,
-    logger: Logger
+func b_step<MetaData: ExecutionMetaData>(
+    during execution: Execution<MetaData>,
+    data: MyData
 ) {
     execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
         
         a_step(during: execution, data: data)
         
-        logger.log("working in step b")
+        execution.log(.info, "working in step b")
+        
     }
 }
 ```
@@ -312,17 +320,16 @@ Here, the call to `a_step` can be seen as the formulation of a requirement for t
 Let us take another step `c_step` which first calls `a_step`, and then `b_step`:
 
 ```Swift
-func c_step(
-    during execution: Execution,
-    data: MyData,
-    logger: Logger
+func c_step<MetaData: ExecutionMetaData>(
+    during execution: Execution<MetaData>,
+    data: MyData
 ) {
     execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
         
        a_step(during: execution, data: data)
        b_step(during: execution, data: data)
         
-       logger.log("working in step c")
+      execution.log(.info, "working in step c")
         
     }
 }
@@ -345,10 +352,9 @@ Requirements for a step are formulated by just calling the accordings steps (i.e
 But sometimes a certain other step is needed just before a certain point in the processing, no matter if it already has been run before. In that case, you can use the `force` method of the execution:
 
 ```Swift
-func b_step(
-    during execution: Execution,
-    data: MyData,
-    logger: Logger
+func b_step<MetaData: ExecutionMetaData>(
+    during execution: Execution<MetaData>,
+    data: MyData
 ) {
     execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
         
@@ -356,7 +362,7 @@ func b_step(
             a_step(during: execution, data: data)
         }
         
-        logger.log("working in step b")
+        execution.log(.info, "working in step b")
         
     }
 }
@@ -367,10 +373,9 @@ Now `a_step` always runs inside `b_step` (if `b_step` gets executed).
 Note that any sub-steps of a forced step are _not_ automatically forced. But you can pass a forced execution onto a sub-step by calling it inside `inheritForced`:
 
 ```Swift
-func b_step(
-    during execution: Execution,
-    data: MyData,
-    logger: Logger
+func b_step<MetaData: ExecutionMetaData>(
+    during execution: Execution<MetaData>,
+    data: MyData
 ) {
     execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
         
@@ -379,7 +384,7 @@ func b_step(
             a_step(during: execution, data: data)
         }
         
-        logger.log("working in step b")
+        execution.log(.info, "working in step b")
         
     }
 }
@@ -397,10 +402,9 @@ Use the `Execution.force` method if a certain step has to be run at a certain po
 If the step is to return a value, this must to be an optional one:
 
 ```Swift
-func my_step(
-    during execution: Execution,
-    data: MyData,
-    logger: Logger
+func my_step<MetaData: ExecutionMetaData>(
+    during execution: Execution<MetaData>,
+    data: MyData
 ) -> String? {
     execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
         ...
@@ -415,10 +419,9 @@ Note that the `effectuate` method returns the according value, so there is no ne
 _The optionality must stem from the fact that the execution might be effectuated or not._ If the code within the `effectuate` call is itself is meant to return an optional value, this has to be done e.g. via the `Result` struct:
 
 ```Swift
-func my_step(
-    during execution: Execution,
-    data: MyData,
-    logger: Logger
+func my_step<MetaData: ExecutionMetaData>(
+    during execution: Execution<MetaData>,
+    data: MyData
 ) -> Result<String, ErrorWithDescription>? {
     execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
         ...
@@ -435,7 +438,7 @@ func my_step(
 You can then check if (in the example) a `String` value is returned by e.g.:
 
 ```Swift
-if case .success(let text) = my_step(during: execution:, data: MyData) {
+if case .success(let text) = my_step<MetaData: ExecutionMetaData>(during: execution:, data: MyData) {
     print(text)
 }
 ```
@@ -472,9 +475,8 @@ Steps as described should be flexible enough for the definition of a sequence of
 
 ```Swift
 func helloAndBye_job(
-    during execution: Execution,
-    file: URL,
-    logger: Logger
+    during execution: Execution<MetaData>,
+    file: URL
 ) {
     
     // get the data:
@@ -557,15 +559,37 @@ The message types (of type `MessageType`, e.g. `Info` or `Warning`) have a stric
 
 See the example project for more details.
 
+### Appeasing log entries
+
+The error class is used when logging represents the point of view of the step or package. This might not coincide with the point of view of the whole application. Example: It is fatal for an image library if the desired image cannot be generated, but for the overall process it may only be a non-fatal error, an image is then simply missing.
+
+So the caller can execute the according code in `execution.appease { … }`. In side this code, any error worse than `Error` is set to `Error`. Instead if this default `Error`, you can also specify the message type to which you want to appease via `execution.appease(to: …) { … }`. The original error type is preserved as field `originalType` of the logging event.
+
+So using an "external" step would actually be formulated as follows in most cases:
+
+```Swift
+func hello_external_step<MetaData: ExecutionMetaData>(
+    during execution: Execution<MetaData>,
+    data: MyData
+) {
+    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+    
+        execution.appease {
+            hello_lib(during: execution, data: data)
+        }
+        
+    }
+}
+```
+
 ### Working in asynchronous contexts
 
 A step might also be asynchronous, i.e. the caller might get suspended. Let's suppose that for some reason `bye_step` from above is async (maybe we are building a web application and `bye_step` has to fetch data from a database):
 
 ```Swift
-func bye_step(
-    during execution: AsyncExecution,
-    data: MyData,
-    logger: Logger
+func bye_step<MetaData: ExecutionMetaData>(
+    during execution: AsyncExecution<MetaData>,
+    data: MyData
 ) async {
     ...
 ```
@@ -583,7 +607,7 @@ dispatchGroup.enter()
 dispatchQueue.async {
     semaphore.wait()
     let parallelExecution = execution.parallel
-    myStep(
+    mystep(
         during: parallelExecution,
         theDate: theData
     )
