@@ -131,6 +131,8 @@ public enum ExecutionEvent: CustomStringConvertible {
     case beginningForcingSteps
     case endingForcingSteps
     
+    case message(type: MessageType, message: String)
+    
     public var description: String {
         switch self {
         case .abortingExecution(reason: let reason):
@@ -165,6 +167,8 @@ public enum ExecutionEvent: CustomStringConvertible {
             "beginning forcing steps"
         case .endingForcingSteps:
             "ending forcing steps"
+        case .message(type: let type, message: let message):
+            "{\(type)} \(message)"
         }
     }
 }

@@ -5,6 +5,20 @@ import Foundation
 /// - keeps global information for logging
 public class Execution<MetaData: ExecutionMetaData> {
     
+    public func log(_ type: MessageType, _ message: String) {
+        executionInfoConsumer.consume(
+            ExecutionInfo(
+                metadata: metadata,
+                level: level,
+                structuralID: UUID(),
+                event: .message(
+                    type: type,
+                    message: message
+                )
+            )
+        )
+    }
+    
     let metadata: MetaData
     
     var executionInfoConsumer: any ExecutionInfoConsumer<MetaData>

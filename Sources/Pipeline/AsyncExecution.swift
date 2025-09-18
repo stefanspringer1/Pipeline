@@ -11,6 +11,20 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         get async { synchronousExecution }
     }
     
+    public func log(_ type: MessageType, _ message: String) async {
+        synchronousExecution.executionInfoConsumer.consume(
+            ExecutionInfo(
+                metadata: synchronousExecution.metadata,
+                level: synchronousExecution.level,
+                structuralID: UUID(),
+                event: .message(
+                    type: type,
+                    message: message
+                )
+            )
+        )
+    }
+    
     public func setting(
         waitNotPausedFunction: (() -> ())? = nil
     ) -> Self {

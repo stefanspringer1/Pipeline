@@ -135,7 +135,7 @@ func myWork_step(
         
         // ... some other code...
         
-        myOther_step(during: execution, logger: logger)
+        myOther_step(during: execution)
         
         // ... some other code...
         
@@ -155,7 +155,7 @@ If you call `myOther_step` inside `myWork_step` as in the example above, `myOthe
 
 ```Swift
 execution.force {
-    myOther_step(during: execution, logger: logger)
+    myOther_step(during: execution)
 }
 ```
 
@@ -163,7 +163,7 @@ You can also disremember what is executed with the following call:
 
 ```Swift
 execution.disremember {
-    myOther_step(during: execution, logger: logger)
+    myOther_step(during: execution)
 }
 ```
 
@@ -171,7 +171,7 @@ There are also be named optional parts that can be activated by adding an accord
 
 ```Swift
 execution.optional(named: "module1:myOther_step", description: "...this is a description...") {
-        myOther_step(during: execution, logger: logger)
+        myOther_step(during: execution)
 }
 ```
 
@@ -179,7 +179,7 @@ On the contrary, if you regard a step at a certain point or more generally a cer
 
 ```Swift
 execution.dispensable(named: "module1:myOther_step", description: "...this is a description...")) {
-        myOther_step(during: execution, logger: logger)
+        myOther_step(during: execution)
 }
 ```
 
@@ -300,7 +300,7 @@ func b_step(
 ) {
     execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
         
-        a_step(during: execution, data: data, logger: logger)
+        a_step(during: execution, data: data)
         
         logger.log("working in step b")
     }
@@ -319,8 +319,8 @@ func c_step(
 ) {
     execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
         
-       a_step(during: execution, data: data, logger: logger)
-       b_step(during: execution, data: data, logger: logger)
+       a_step(during: execution, data: data)
+       b_step(during: execution, data: data)
         
        logger.log("working in step c")
         
@@ -353,7 +353,7 @@ func b_step(
     execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
         
         execution.force {
-            a_step(during: execution, data: data, logger: logger)
+            a_step(during: execution, data: data)
         }
         
         logger.log("working in step b")
@@ -376,7 +376,7 @@ func b_step(
         
         execution.inheritForced {
             // this execution of a_step is forced if the current execution of b_step has been forced:
-            a_step(during: execution, data: data, logger: logger)
+            a_step(during: execution, data: data)
         }
         
         logger.log("working in step b")
@@ -481,7 +481,7 @@ func helloAndBye_job(
     guard let data = readData_step(during: execution, file: file) else { return }
     
     // start the processing of the data:
-    helloAndBye_step(during: execution, data: data, logger: logger)
+    helloAndBye_step(during: execution, data: data)
 }
 ```
 
