@@ -5,19 +5,7 @@ import Foundation
 /// - keeps global information for logging
 public class Execution<MetaData: ExecutionMetaData> {
     
-    public func log(_ type: MessageType, _ message: String) {
-        executionInfoConsumer.consume(
-            ExecutionInfo(
-                metadata: metadata,
-                level: level,
-                structuralID: UUID(),
-                event: .message(
-                    type: type,
-                    message: message
-                )
-            )
-        )
-    }
+    let language: Language
     
     let metadata: MetaData
     
@@ -55,10 +43,9 @@ public class Execution<MetaData: ExecutionMetaData> {
     }
     
     public init(
+        language: Language = .en,
         metadata: MetaData,
-        processID: String? = nil,
         executionInfoConsumer: any ExecutionInfoConsumer<MetaData>,
-        itemInfo: String? = nil,
         showSteps: Bool = false,
         debug: Bool = false,
         effectuationStack: [Effectuation] = [Effectuation](),
@@ -67,6 +54,7 @@ public class Execution<MetaData: ExecutionMetaData> {
         waitNotPausedFunction: (() -> ())? = nil,
         logFileInfo: URL? = nil
     ) {
+        self.language = language
         self.metadata = metadata
         self._effectuationStack = effectuationStack
         self.executionInfoConsumer = executionInfoConsumer

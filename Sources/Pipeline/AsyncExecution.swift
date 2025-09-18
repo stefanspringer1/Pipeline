@@ -11,20 +11,6 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         get async { synchronousExecution }
     }
     
-    public func log(_ type: MessageType, _ message: String) async {
-        synchronousExecution.executionInfoConsumer.consume(
-            ExecutionInfo(
-                metadata: synchronousExecution.metadata,
-                level: synchronousExecution.level,
-                structuralID: UUID(),
-                event: .message(
-                    type: type,
-                    message: message
-                )
-            )
-        )
-    }
-    
     public func setting(
         waitNotPausedFunction: (() -> ())? = nil
     ) -> Self {
@@ -44,10 +30,10 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
     }
     
     public init(
+        language: Language = .en,
         metadata: MetaData,
         processID: String? = nil,
         executionInfoConsumer: any ExecutionInfoConsumer<MetaData>,
-        itemInfo: String? = nil,
         showSteps: Bool = false,
         debug: Bool = false,
         effectuationStack: [Effectuation] = [Effectuation](),
@@ -57,10 +43,9 @@ public actor AsyncExecution<MetaData: ExecutionMetaData> {
         logFileInfo: URL? = nil
     ) {
         self.synchronousExecution = Execution<MetaData>(
+            language: language,
             metadata: metadata,
-            processID: processID,
             executionInfoConsumer: executionInfoConsumer,
-            itemInfo: itemInfo,
             showSteps: showSteps,
             debug: debug,
             effectuationStack: effectuationStack,

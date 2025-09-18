@@ -1,5 +1,6 @@
 import Testing
 import Pipeline
+import Foundation
 
 @Suite(.serialized) struct MixedPipelineTests {
     
@@ -8,6 +9,12 @@ import Pipeline
         processID: "precess123",
         workItemInfo: "item123"
     )
+    
+    @Test func f() {
+        print("1")
+        print(Locale.LanguageCode.isoLanguageCodes)
+        print("2")
+    }
     
     /*
      This test is the same as the according one in PipelineTests, but with the outer steps asynchronous and the inner steps synchronous.
