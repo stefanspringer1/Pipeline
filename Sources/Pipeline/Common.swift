@@ -1,8 +1,6 @@
 import Foundation
 
-public protocol ExecutionMetaData: CustomStringConvertible, Sendable {
-    
-}
+public protocol ExecutionMetaData: CustomStringConvertible, Sendable {}
 
 public protocol ExecutionInfoConsumer<MetaData> {
     associatedtype MetaData: CustomStringConvertible
