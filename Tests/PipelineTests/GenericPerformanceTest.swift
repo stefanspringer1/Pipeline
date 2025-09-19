@@ -2,7 +2,7 @@ import Testing
 import Pipeline
 import Foundation
 
-@Suite(.serialized) struct GenericPerformanceTest {
+@Suite(.serialized) struct GenericPerformanceTests {
     
     let metadata1 = MyMetaData1(
         applicationName: "myapp",
