@@ -131,7 +131,7 @@ func elapsedTime(of f: () async -> Void) async -> Double {
 
 /// Process the items in `batch` in parallel by the function `worker` using `threads` number of threads.
 public func executeInParallel<Seq: Sequence>(batch: Seq, threads: Int, worker: @escaping (Seq.Element) -> ()) {
-    let queue = DispatchQueue(label: "AyncLogger", attributes: .concurrent)
+    let queue = DispatchQueue(label: "executeInParallel", attributes: .concurrent)
     let group = DispatchGroup()
     let semaphore = DispatchSemaphore(value: threads)
     
