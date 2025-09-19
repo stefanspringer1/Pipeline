@@ -620,4 +620,4 @@ Note that the parallel steps are not registered in the execution database. But t
 
 ### Pause/stop
 
-In order to pause or stop the execution of steps, appropriate methods of `Execution` are available.
+In order to pause or stop the execution of steps, appropriate methods of `Execution` are available. See the `pauseTest()` function in the tests.

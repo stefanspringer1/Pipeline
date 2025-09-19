@@ -16,14 +16,6 @@ import Foundation
         path: "/"
     )
     
-    func elapsedTime(of f: () -> Void) -> Double {
-        let startTime = DispatchTime.now()
-        f()
-        let endTime = DispatchTime.now()
-        let elapsedTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-        return Double(elapsedTime) / 1_000_000_000
-    }
-    
     final class NongenericExecution{
         
         let metadata: MyMetaData1

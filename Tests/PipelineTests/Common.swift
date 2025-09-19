@@ -1,3 +1,4 @@
+import Foundation
 import Pipeline
 
 protocol Logger {
@@ -91,4 +92,20 @@ extension String {
     var firstPathPart: Substring {
         self.split(separator: "/", omittingEmptySubsequences: false).first!
     }
+}
+
+func elapsedTime(of f: () -> Void) -> Double {
+    let startTime = DispatchTime.now()
+    f()
+    let endTime = DispatchTime.now()
+    let elapsedTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    return Double(elapsedTime) / 1_000_000_000
+}
+
+func elapsedTime(of f: () async -> Void) async -> Double {
+    let startTime = DispatchTime.now()
+    await f()
+    let endTime = DispatchTime.now()
+    let elapsedTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    return Double(elapsedTime) / 1_000_000_000
 }
