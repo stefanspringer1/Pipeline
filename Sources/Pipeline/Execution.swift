@@ -4,7 +4,7 @@ import Localization
 /// Manages the execution of steps. In particular
 /// - prevents double execution of steps
 /// - keeps global information for logging
-public class Execution<MetaData: ExecutionMetaData> {
+public final class Execution<MetaData: ExecutionMetaData> {
     
     let language: Language
     

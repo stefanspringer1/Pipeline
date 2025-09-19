@@ -18,7 +18,7 @@ import Foundation
         return Double(elapsedTime) / 1_000_000_000
     }
     
-    class GenericExecution<MetaData: ExecutionMetaData> {
+    final class GenericExecution<MetaData: ExecutionMetaData> {
         
         let metadata: MetaData
         
@@ -27,7 +27,7 @@ import Foundation
         }
     }
     
-    class NongenericExecution{
+    final class NongenericExecution{
         
         let metadata: MyMetaData
         

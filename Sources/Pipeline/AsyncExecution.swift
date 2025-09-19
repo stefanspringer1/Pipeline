@@ -4,7 +4,7 @@ import Localization
 /// Manages the execution of steps. In particular
 /// - prevents double execution of steps
 /// - keeps global information for logging
-public actor AsyncExecution<MetaData: ExecutionMetaData> {
+public final actor AsyncExecution<MetaData: ExecutionMetaData> {
     
     let synchronousExecution: Execution<MetaData>
     
