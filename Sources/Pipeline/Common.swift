@@ -95,14 +95,14 @@ public struct ExecutionInfoFormat {
 
 public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConvertible {
     
-    let type: InfoType
-    let originalType: InfoType? // non-appeased
-    let time: Date
-    let metadata: MetaData
-    let level: Int
-    let structuralID: UUID
-    let event: ExecutionEvent
-    let effectuationStack: [Effectuation]
+    public let type: InfoType
+    public let originalType: InfoType? // non-appeased
+    public let time: Date
+    public let metadata: MetaData
+    public let level: Int
+    public let structuralID: UUID
+    public let event: ExecutionEvent
+    public let effectuationStack: [Effectuation]
     
     public func isMessage() -> Bool { if case .message = event { true } else { false } }
     

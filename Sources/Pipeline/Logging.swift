@@ -4,7 +4,7 @@ import Localization
 // The message type that informs about the severity a message.
 //
 // It conforms to `Comparable` so there is an order of severity.
-public enum InfoType: Comparable, Codable, Sendable, Hashable {
+public enum InfoType: Comparable, Codable, Sendable, Hashable, CaseIterable {
     
     /// Debugging information.
     case debug

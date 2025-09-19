@@ -15,8 +15,22 @@ class CollectingLogger: Logger {
         _messages.append(message)
     }
     
-    func log(_ message: String, indentation: String) {
-        _messages.append(indentation + message)
+}
+
+open class ConcurrentCollectingLogger: Logger {
+    
+    private var _messages = [String]()
+    var messages: [String] { _messages }
+    
+    internal let group = DispatchGroup()
+    internal let queue = DispatchQueue(label: "ConcurrentCollectingLogger", qos: .background)
+    
+    public func log(_ message: String) {
+        group.enter()
+        self.queue.async {
+            self._messages.append(message)
+            self.group.leave()
+        }
     }
     
 }
@@ -24,14 +38,19 @@ class CollectingLogger: Logger {
 class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: ExecutionInfoConsumer {
     
     var logger: Logger
+    let minimalInfoType: InfoType?
     var excutionInfoFormat: ExecutionInfoFormat?
     
-    init(logger: Logger, excutionInfoFormat: ExecutionInfoFormat? = nil) {
+    init(logger: Logger, withMinimalInfoType minimalInfoType: InfoType? = nil, excutionInfoFormat: ExecutionInfoFormat? = nil) {
         self.logger = logger
+        self.minimalInfoType = minimalInfoType
         self.excutionInfoFormat = excutionInfoFormat
     }
     
     func consume(_ executionInfo: ExecutionInfo<MetaData>) {
+        if let minimalInfoType, executionInfo.type < minimalInfoType {
+            return
+        }
         if let excutionInfoFormat {
             logger.log(executionInfo.description(format: excutionInfoFormat))
         } else {
@@ -108,4 +127,25 @@ func elapsedTime(of f: () async -> Void) async -> Double {
     let endTime = DispatchTime.now()
     let elapsedTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
     return Double(elapsedTime) / 1_000_000_000
+}
+
+/// Process the items in `batch` in parallel by the function `worker` using `threads` number of threads.
+public func executeInParallel<Seq: Sequence>(batch: Seq, threads: Int, worker: @escaping (Seq.Element) -> ()) {
+    let queue = DispatchQueue(label: "AyncLogger", attributes: .concurrent)
+    let group = DispatchGroup()
+    let semaphore = DispatchSemaphore(value: threads)
+    
+    for item in batch {
+        
+        group.enter()
+        semaphore.wait()
+        queue.async {
+            worker(item)
+            semaphore.signal()
+            group.leave()
+        }
+        
+    }
+    
+    group.wait()
 }

@@ -76,15 +76,24 @@ class PrintingLogger: Logger {
 class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: ExecutionInfoConsumer {
     
     var logger: Logger
-    var excutionInfoFormat: ExecutionInfoFormat
+    let minimalInfoType: InfoType?
+    var excutionInfoFormat: ExecutionInfoFormat?
     
-    init(logger: Logger, excutionInfoFormat: ExecutionInfoFormat = .full) {
+    init(logger: Logger, withMinimalInfoType minimalInfoType: InfoType? = nil, excutionInfoFormat: ExecutionInfoFormat? = nil) {
         self.logger = logger
+        self.minimalInfoType = minimalInfoType
         self.excutionInfoFormat = excutionInfoFormat
     }
     
     func consume(_ executionInfo: ExecutionInfo<MetaData>) {
-        logger.log(executionInfo.description(executionInfoDescription: excutionInfoFormat))
+        if let minimalInfoType, executionInfo.type < minimalInfoType {
+            return
+        }
+        if let excutionInfoFormat {
+            logger.log(executionInfo.description(format: excutionInfoFormat))
+        } else {
+            logger.log(executionInfo.description)
+        }
     }
 }
 ```
