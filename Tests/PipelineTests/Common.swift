@@ -5,6 +5,15 @@ protocol Logger {
     func log(_ message: String)
 }
 
+// from README:
+class PrintingLogger: Logger {
+    
+    func log(_ message: String) {
+        print(message)
+    }
+    
+}
+
 class CollectingLogger: Logger {
     
     private var _messages = [String]()
@@ -74,15 +83,6 @@ class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: Executi
     }
 }
 
-// from README:
-class PrintingLogger: Logger {
-    
-    func log(_ message: String) {
-        print(message)
-    }
-    
-}
-
 struct MyMetaData1: ExecutionMetaData {
     
     let applicationName: String
@@ -105,21 +105,23 @@ struct MyMetaData2: ExecutionMetaData {
     }
 }
 
-class PrintingxecutionInfoConsumerWithContext<MetaData: CustomStringConvertible>: ExecutionInfoConsumer {
+/// Process the items in `batch` in parallel by the function `worker` using `threads` number of threads.
+public func executeInParallel<Seq: Sequence>(batch: Seq, threads: Int, worker: @escaping (Seq.Element) -> ()) {
+    let queue = DispatchQueue(label: "executeInParallel", attributes: .concurrent)
+    let group = DispatchGroup()
+    let semaphore = DispatchSemaphore(value: threads)
     
-    let applicationName: String
-    let processID: String
-    let workItemInfo: String
-
-    init(applicationName: String, processID: String, forWorkItem workItemInfo: String) {
-        self.applicationName = applicationName
-        self.processID = processID
-        self.workItemInfo = workItemInfo
+    for item in batch {
+        group.enter()
+        semaphore.wait()
+        queue.async {
+            worker(item)
+            semaphore.signal()
+            group.leave()
+        }
     }
     
-    func consume(_ executionInfo: ExecutionInfo<MetaData>) {
-        print("\(applicationName): \(processID)/\(workItemInfo): \(executionInfo)")
-    }
+    group.wait()
 }
 
 extension String {
@@ -142,25 +144,4 @@ func elapsedTime(of f: () async -> Void) async -> Double {
     let endTime = DispatchTime.now()
     let elapsedTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
     return Double(elapsedTime) / 1_000_000_000
-}
-
-/// Process the items in `batch` in parallel by the function `worker` using `threads` number of threads.
-public func executeInParallel<Seq: Sequence>(batch: Seq, threads: Int, worker: @escaping (Seq.Element) -> ()) {
-    let queue = DispatchQueue(label: "AyncLogger", attributes: .concurrent)
-    let group = DispatchGroup()
-    let semaphore = DispatchSemaphore(value: threads)
-    
-    for item in batch {
-        
-        group.enter()
-        semaphore.wait()
-        queue.async {
-            worker(item)
-            semaphore.signal()
-            group.leave()
-        }
-        
-    }
-    
-    group.wait()
 }
