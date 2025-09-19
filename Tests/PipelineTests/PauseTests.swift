@@ -98,7 +98,7 @@ import Foundation
             let deviationPercent = (time - expectedTime) * 100 / expectedTime
             print("deviation from expected time: \(String(format: "%.1f", deviationPercent)) %")
             
-            #expect(deviationPercent < 20) // 10 % percent should suffice, but we do not want a test to fail
+            #expect(deviationPercent < 20) // 10 % percent should suffice, but we do not want a test to fail for external reasons
         }
         
         print("CONTROLLER: waiting \(waitTimeBeforePausingProcessing) seconds...")

@@ -155,7 +155,7 @@ import Foundation
         
         print("deviation #2: \(String(format: "%.1f", deviationPercent2)) %")
         
-        // actual deviations should be < 1 %, but we do not want a test to fail
+        // actual deviations should be < 1 %, but we do not want a test to fail for external reasons
         #expect(abs(deviationPercent1) < 10)
         #expect(abs(deviationPercent2) < 10)
         
