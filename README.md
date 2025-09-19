@@ -78,6 +78,8 @@ class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: Executi
     var logger: Logger
     let minimalInfoType: InfoType?
     var excutionInfoFormat: ExecutionInfoFormat?
+    private var _executionAborted = false
+    var executionAborted: Bool { _executionAborted }
     
     init(logger: Logger, withMinimalInfoType minimalInfoType: InfoType? = nil, excutionInfoFormat: ExecutionInfoFormat? = nil) {
         self.logger = logger
@@ -86,6 +88,9 @@ class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: Executi
     }
     
     func consume(_ executionInfo: ExecutionInfo<MetaData>) {
+        if executionInfo.type >= .fatal {
+            _executionAborted = true
+        }
         if let minimalInfoType, executionInfo.type < minimalInfoType {
             return
         }
@@ -95,8 +100,11 @@ class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: Executi
             logger.log(executionInfo.description)
         }
     }
+    
 }
 ```
+
+As `ExecutionInfoConsumer` might behave differently if a fatal error for the work item has been recorded or not (cf. the section below about aborting the execution), so it is necessary to use a new `ExecutionInfoConsumer` for each each execution unless other appropriate measures have been taken.
 
 You also need some metadata, e.g.:
 
@@ -590,6 +598,14 @@ func hello_external_step<MetaData: ExecutionMetaData>(
     }
 }
 ```
+
+### Aborting the execution
+
+The `ExecutionInfoConsumer` has to provide a read-only boolean property `executionAborted` that is used by the `Execution` to see if any further step should be excuted. No new step is started if this property returns `true`. The `ExecutionInfoConsumer` can e.g. return such a value if a fatal or deadly error has occurred.
+
+Alternatively, the execution can be informed via the `abort(reason:)` message that the execution shoudl be aborted.
+
+Note that any following code not belonging to any further step is still being executed.
 
 ### Working in asynchronous contexts
 

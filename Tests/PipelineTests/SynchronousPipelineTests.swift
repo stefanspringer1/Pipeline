@@ -175,11 +175,11 @@ import Foundation
                                     ending step step4(during:)@\(#file.firstPathPart) (doing something in step4)
                                 ending step step3a(during:)@\(#file.firstPathPart) (doing something in step3a)
                                 aborting execution: for some reason
-                                skipping step in aborted execution step3b(during:)@\(#file.firstPathPart) (doing something in step3b)
+                                skipping in an aborted environment step step3b(during:)@\(#file.firstPathPart) (doing something in step3b)
                             ending dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
                         aborted step step2a(during:abort:)@\(#file.firstPathPart) (doing something in step2a)
                         beginning "calling step2b in step1"
-                            skipping step in aborted execution step2b(during:)@\(#file.firstPathPart) (doing something in step2b)
+                            skipping in an aborted environment step step2b(during:)@\(#file.firstPathPart) (doing something in step2b)
                         ending "calling step2b in step1"
                     ending optional part "step2" (we usually do not step2)
                 aborted step step1(during:abortInStep2a:)@\(#file.firstPathPart) (doing something in step1)

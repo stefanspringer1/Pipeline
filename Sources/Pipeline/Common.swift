@@ -5,6 +5,7 @@ public protocol ExecutionMetaData: CustomStringConvertible, Sendable {}
 public protocol ExecutionInfoConsumer<MetaData> {
     associatedtype MetaData: CustomStringConvertible
     func consume(_ executionInfo: ExecutionInfo<MetaData>)
+    var executionAborted: Bool { get }
 }
 
 public struct StepID: Hashable, CustomStringConvertible, Sendable {
@@ -202,7 +203,7 @@ public enum ExecutionEvent: CustomStringConvertible {
         case .skippingPreviouslyExecutedStep(id: let id, description: let description):
             "skipping previously executed step \(id)\(description != nil ? " (\(description!))" : "")"
         case .skippingStepInAbortedExecution(id: let id, description: let description):
-            "skipping step in aborted execution \(id)\(description != nil ? " (\(description!))" : "")"
+            "skipping in an aborted environment step \(id)\(description != nil ? " (\(description!))" : "")"
         case .abortedStep(id: let id, description: let description):
             "aborted step \(id)\(description != nil ? " (\(description!))" : "")"
         case .beginningDispensablePart(name: let name, description: let description):

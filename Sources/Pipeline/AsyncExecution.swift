@@ -284,7 +284,7 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
     
     private func effectuateTest(forStep step: StepID, withDescription description: String?) async -> (execute: Bool, forced: Bool, structuralID: UUID) {
         let structuralID = UUID()
-        if synchronousExecution._aborted {
+        if synchronousExecution._aborted || synchronousExecution.executionInfoConsumer.executionAborted {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,

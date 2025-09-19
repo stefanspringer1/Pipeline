@@ -305,7 +305,7 @@ public final class Execution<MetaData: ExecutionMetaData> {
     
     private func effectuateTest(forStep step: StepID, withDescription description: String?) -> (execute: Bool, forced: Bool, structuralID: UUID) {
         let structuralID = UUID()
-        if _aborted {
+        if _aborted || executionInfoConsumer.executionAborted {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
