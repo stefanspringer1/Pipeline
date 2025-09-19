@@ -68,48 +68,31 @@ public final class Execution<MetaData: ExecutionMetaData> {
     
     public var executionPath: String { _effectuationStack.executionPath }
     
-    var _aborted = false
+    var _stopped = false
     
-    public func abort(reason: String) {
+    public func stop(reason: String) {
         executionInfoConsumer.consume(
             ExecutionInfo(
                 type: .progress,
                 metadata: metadata,
                 level: level,
                 structuralID: UUID(),
-                event: .abortingExecution(
+                event: .stoppingExecution(
                     reason: reason
                 ),
                 effectuationStack: effectuationStack
             )
         )
-        _aborted = true
+        _stopped = true
     }
     
-    public var aborted: Bool { _aborted }
+    public var stopped: Bool { _stopped }
     
     var forceValues = [Bool]()
     var appeaseTypes = [InfoType]()
     
-    let semaphoreForPause = DispatchSemaphore(value: 1)
-    
-    /// Pausing the execution (without effect for async execution).
-    public func pause() {
-        semaphoreForPause.wait()
-    }
-    
-    /// Proceeding a paused execution.
-    public func proceed() {
-        semaphoreForPause.signal()
-    }
-    
     func waitNotPaused() {
-        
-        func waitNotPaused() {
-            semaphoreForPause.wait(); semaphoreForPause.signal()
-        }
-        
-        (waitNotPausedFunction ?? waitNotPaused)() // wait if the execution is paused
+        waitNotPausedFunction?() // wait if the execution is paused
     }
     
     /// Force all contained work to be executed, even if already executed before.
@@ -305,14 +288,14 @@ public final class Execution<MetaData: ExecutionMetaData> {
     
     private func effectuateTest(forStep step: StepID, withDescription description: String?) -> (execute: Bool, forced: Bool, structuralID: UUID) {
         let structuralID = UUID()
-        if _aborted || executionInfoConsumer.executionAborted {
+        if _stopped || executionInfoConsumer.executionStopped {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
-                    event: .skippingStepInAbortedExecution(
+                    event: .skippingStepInStoppedExecution(
                         id: step,
                         description: description
                     ),
@@ -406,14 +389,14 @@ public final class Execution<MetaData: ExecutionMetaData> {
     }
     
     private func after(step: StepID, structuralID: UUID, description: String?, forced: Bool, secondsElapsed: Double) {
-        if _aborted {
+        if _stopped {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
                     metadata: metadata,
                     level: level,
                     structuralID: structuralID,
-                    event: .abortedStep(
+                    event: .stoppedStep(
                         id: step,
                         description: description
                     ),

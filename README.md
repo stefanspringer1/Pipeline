@@ -16,7 +16,7 @@ This framework relies in part on some easy conventions[^1] to make the logic of 
 
 [^1]: One can remove the term “convention” entirely from the description and say that the processing is controlled by calls to the `effectuate` and `force` methods with unique identifiers, which implements a process management. The conventions are used for clarity and are not decisive from a conceptual point of view.
 
-This documentation contains some motivation. For a quick start, there is a tutorial below. For more details, you might look at the conventions (between horizontal rules) given further below and look at some code samples. A complete example is given as [SwiftWorkflowExampleProgram](https://github.com/stefanspringer1/SwiftWorkflowExampleProgram), using some steps defined in the library [SwiftWorkflowExampleLibrary](https://github.com/stefanspringer1/SwiftWorkflowExampleLibrary). The common data format being read at each “entry point” (job) in that example (which could be e.g. an XML document in other cases) is defined in [SwiftWorkflowExampleData](https://github.com/stefanspringer1/SwiftWorkflowExampleData). Code from that example (maybe in modified form) is used below.
+This documentation contains some motivation. For a quick start, there is a tutorial below. For more details, you might look at the conventions (between horizontal rules) given further below and look at some code samples from the contained tests.
 
 [WorkflowInVapor](https://github.com/stefanspringer1/WorkflowInVapor) is a simple [Vapor](https://vapor.codes) app using a workflow.
 
@@ -78,8 +78,8 @@ class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: Executi
     var logger: Logger
     let minimalInfoType: InfoType?
     var excutionInfoFormat: ExecutionInfoFormat?
-    private var _executionAborted = false
-    var executionAborted: Bool { _executionAborted }
+    private var _executionStopped = false
+    var executionStopped: Bool { _executionStopped }
     
     init(logger: Logger, withMinimalInfoType minimalInfoType: InfoType? = nil, excutionInfoFormat: ExecutionInfoFormat? = nil) {
         self.logger = logger
@@ -89,7 +89,7 @@ class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: Executi
     
     func consume(_ executionInfo: ExecutionInfo<MetaData>) {
         if executionInfo.type >= .fatal {
-            _executionAborted = true
+            _executionStopped = true
         }
         if let minimalInfoType, executionInfo.type < minimalInfoType {
             return
@@ -104,7 +104,7 @@ class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: Executi
 }
 ```
 
-As `ExecutionInfoConsumer` might behave differently if a fatal error for the work item has been recorded or not (cf. the section below about aborting the execution), so it is necessary to use a new `ExecutionInfoConsumer` for each each execution unless other appropriate measures have been taken.
+As `ExecutionInfoConsumer` might behave differently if a fatal error for the work item has been recorded or not (cf. the section below about stopping the execution), so it is necessary to use a new `ExecutionInfoConsumer` for each each execution unless other appropriate measures have been taken.
 
 You also need some metadata, e.g.:
 
@@ -476,16 +476,6 @@ This approach has as limitation that a library function is a kind of isolated st
 
 In practice we think that this limitation is not a severe one, because usually a library function is a quite encapsulated unit that applies, so to speak, some collected knowledge to a certain problem field and _should not need to know much_ about the outside.
 
-### Fatal errors and resetting the error level
-
-The execution can be aborted by the `abort()` method of the `Execution`. No further step is then caleld, but note that any remaining code outside of steps is still being executed. You might want to do this in case of a fatal error.
-
-The error level is something that belongs to the logging system and not to the Pipeline package, but the following should be mentioned here:
-
-A fatal error according to an included package could be better interpreted as a normal error at the caller side. For example, the conversion of an image might fail, so this migth be (or even should) be a fatal error from the view of the imaging package being used. But within the package that is using the imaging package this could be seen as a normal error, the whole processign does not have to be aborted if just one image cannot be converted, it then suffices to report a normal error.
-
-So the logging library should have the option to execute some code while downgrading or appeasing e.g. all fatal error to a normal error.
-
 ### Jobs
 
 Steps as described should be flexible enough for the definition of a sequence of processing. But in some circumstances you might want to distinguish between a step that reads (and maybe writes) the data that you would like to process, and the steps in between that processes that data. A step that reads (and maybe writes) the data would then be the starting point for a processing. We call such a step a “job” and give its name the postfix `_job` instead of `_step`:
@@ -599,11 +589,11 @@ func hello_external_step<MetaData: ExecutionMetaData>(
 }
 ```
 
-### Aborting the execution
+### Stopping the execution
 
-The `ExecutionInfoConsumer` has to provide a read-only boolean property `executionAborted` that is used by the `Execution` to see if any further step should be excuted. No new step is started if this property returns `true`. The `ExecutionInfoConsumer` can e.g. return such a value if a fatal or deadly error has occurred.
+The `ExecutionInfoConsumer` has to provide a read-only boolean property `executionStopped` that is used by the `Execution` to see if any further step should be excuted. No new step is started if this property returns `true`. The `ExecutionInfoConsumer` can e.g. return such a value if a fatal or deadly error has occurred.
 
-Alternatively, the execution can be informed via the `abort(reason:)` message that the execution shoudl be aborted.
+Alternatively, the execution can be informed via the `stop(reason:)` message that the execution shoudl be stopped.
 
 Note that any following code not belonging to any further step is still being executed.
 
@@ -619,11 +609,11 @@ func bye_step<MetaData: ExecutionMetaData>(
     ...
 ```
 
-As mentioned above, you have to use `AsyncExecution`, and you can get call synchronous step with teh `Execution` instance `execution.synchronous`.
+As mentioned above, you have to use `AsyncExecution`, and you can get call synchronous step with the `Execution` instance `execution.synchronous`.
 
-### Execution in a concurrent context
+### Parallel execution
 
-In a concurrent context, use `execution.parallel` to create a copy of an `execution`. Of course, you then need a logger that can handle conccurent logging.
+Use `execution.parallel` to create a copy of an `execution` to use in a parallelization. Of course, you then need a logger that can handle conccurent logging.
 
 See the example `parallelTest1()` in the tests.
 

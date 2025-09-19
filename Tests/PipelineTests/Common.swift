@@ -64,8 +64,8 @@ class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: Executi
     var logger: Logger
     let minimalInfoType: InfoType?
     var excutionInfoFormat: ExecutionInfoFormat?
-    private var _executionAborted = false
-    var executionAborted: Bool { _executionAborted }
+    private var _executionStopped = false
+    var executionStopped: Bool { _executionStopped }
     
     init(logger: Logger, withMinimalInfoType minimalInfoType: InfoType? = nil, excutionInfoFormat: ExecutionInfoFormat? = nil) {
         self.logger = logger
@@ -75,7 +75,7 @@ class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: Executi
     
     func consume(_ executionInfo: ExecutionInfo<MetaData>) {
         if executionInfo.type >= .fatal {
-            _executionAborted = true
+            _executionStopped = true
         }
         if let minimalInfoType, executionInfo.type < minimalInfoType {
             return

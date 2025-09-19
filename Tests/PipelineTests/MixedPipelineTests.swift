@@ -15,13 +15,13 @@ import Foundation
      */
     @Test func testExecution() async throws {
             
-        func step1<MetaData: ExecutionMetaData>(during execution: AsyncExecution<MetaData>, abortInStep2a: Bool = false) async {
+        func step1<MetaData: ExecutionMetaData>(during execution: AsyncExecution<MetaData>, stopStep2a: Bool = false) async {
             #expect(await execution.level == 0)
             await execution.effectuate("doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 #expect(await execution.level == 1)
                 await execution.optional(named: "step2", description: "we usually do not step2") {
                     #expect(await execution.level == 2)
-                    await step2a(during: execution, abort: abortInStep2a)
+                    await step2a(during: execution, stop: stopStep2a)
                     await execution.doing("calling step2b in step1") {
                         #expect(await execution.level == 3)
                         await step2b(during: execution)
@@ -30,15 +30,15 @@ import Foundation
             }
         }
         
-        func step2a<MetaData: ExecutionMetaData>(during execution: AsyncExecution<MetaData>, abort: Bool = false) async {
+        func step2a<MetaData: ExecutionMetaData>(during execution: AsyncExecution<MetaData>, stop: Bool = false) async {
             #expect(await execution.level == 2)
             await execution.effectuate("doing something in step2a", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 #expect(await execution.level == 3)
                 await execution.dispensable(named: "calling step3a and step3b in step2a", description: "we might want to skip step3a and step3b in step2a") {
                     #expect(await execution.level == 4)
                     step3a(during: await execution.synchronous)
-                    if abort {
-                        await execution.abort(reason: "for some reason")
+                    if stop {
+                        await execution.stop(reason: "for some reason")
                     }
                     step3b(during: await execution.synchronous)
                 }
@@ -82,9 +82,9 @@ import Foundation
             await step1(during: execution)
             
             #expect(logger.messages.joined(separator: "\n") == """
-                beginning step step1(during:abortInStep2a:)@\(#file.firstPathPart) (doing something in step1)
+                beginning step step1(during:stopStep2a:)@\(#file.firstPathPart) (doing something in step1)
                     skipping optional part "step2" (we usually do not step2)
-                ending step step1(during:abortInStep2a:)@\(#file.firstPathPart) (doing something in step1)
+                ending step step1(during:stopStep2a:)@\(#file.firstPathPart) (doing something in step1)
                 """)
         }
         
@@ -97,9 +97,9 @@ import Foundation
             await step1(during: execution)
             
             #expect(logger.messages.joined(separator: "\n") == """
-                beginning step step1(during:abortInStep2a:)@\(#file.firstPathPart) (doing something in step1)
+                beginning step step1(during:stopStep2a:)@\(#file.firstPathPart) (doing something in step1)
                     beginning optional part "step2" (we usually do not step2)
-                        beginning step step2a(during:abort:)@\(#file.firstPathPart) (doing something in step2a)
+                        beginning step step2a(during:stop:)@\(#file.firstPathPart) (doing something in step2a)
                             beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
                                 beginning step step3a(during:)@\(#file.firstPathPart) (doing something in step3a)
                                     beginning step step4(during:)@\(#file.firstPathPart) (doing something in step4)
@@ -109,7 +109,7 @@ import Foundation
                                 beginning step step3b(during:)@\(#file.firstPathPart) (doing something in step3b)
                                 ending step step3b(during:)@\(#file.firstPathPart) (doing something in step3b)
                             ending dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
-                        ending step step2a(during:abort:)@\(#file.firstPathPart) (doing something in step2a)
+                        ending step step2a(during:stop:)@\(#file.firstPathPart) (doing something in step2a)
                         beginning "calling step2b in step1"
                             beginning step step2b(during:)@\(#file.firstPathPart) (doing something in step2b)
                                 beginning dispensible part "calling step3a in step2b" (we might want to skip step3a in step2b)
@@ -123,7 +123,7 @@ import Foundation
                             ending step step2b(during:)@\(#file.firstPathPart) (doing something in step2b)
                         ending "calling step2b in step1"
                     ending optional part "step2" (we usually do not step2)
-                ending step step1(during:abortInStep2a:)@\(#file.firstPathPart) (doing something in step1)
+                ending step step1(during:stopStep2a:)@\(#file.firstPathPart) (doing something in step1)
                 """)
         }
         
@@ -136,9 +136,9 @@ import Foundation
             await step1(during: execution)
             
             #expect(logger.messages.joined(separator: "\n") == """
-                beginning step step1(during:abortInStep2a:)@\(#file.firstPathPart) (doing something in step1)
+                beginning step step1(during:stopStep2a:)@\(#file.firstPathPart) (doing something in step1)
                     beginning optional part "step2" (we usually do not step2)
-                        beginning step step2a(during:abort:)@\(#file.firstPathPart) (doing something in step2a)
+                        beginning step step2a(during:stop:)@\(#file.firstPathPart) (doing something in step2a)
                             beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
                                 beginning step step3a(during:)@\(#file.firstPathPart) (doing something in step3a)
                                     beginning step step4(during:)@\(#file.firstPathPart) (doing something in step4)
@@ -148,14 +148,14 @@ import Foundation
                                 beginning step step3b(during:)@\(#file.firstPathPart) (doing something in step3b)
                                 ending step step3b(during:)@\(#file.firstPathPart) (doing something in step3b)
                             ending dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
-                        ending step step2a(during:abort:)@\(#file.firstPathPart) (doing something in step2a)
+                        ending step step2a(during:stop:)@\(#file.firstPathPart) (doing something in step2a)
                         beginning "calling step2b in step1"
                             beginning step step2b(during:)@\(#file.firstPathPart) (doing something in step2b)
                                 skipping dispensible part "calling step3a in step2b" (we might want to skip step3a in step2b)
                             ending step step2b(during:)@\(#file.firstPathPart) (doing something in step2b)
                         ending "calling step2b in step1"
                     ending optional part "step2" (we usually do not step2)
-                ending step step1(during:abortInStep2a:)@\(#file.firstPathPart) (doing something in step1)
+                ending step step1(during:stopStep2a:)@\(#file.firstPathPart) (doing something in step1)
                 """)
         }
         
@@ -165,27 +165,27 @@ import Foundation
             
             let execution = AsyncExecution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
             
-            await step1(during: execution, abortInStep2a: true)
+            await step1(during: execution, stopStep2a: true)
             
             #expect(logger.messages.joined(separator: "\n") == """
-                beginning step step1(during:abortInStep2a:)@\(#file.firstPathPart) (doing something in step1)
+                beginning step step1(during:stopStep2a:)@\(#file.firstPathPart) (doing something in step1)
                     beginning optional part "step2" (we usually do not step2)
-                        beginning step step2a(during:abort:)@\(#file.firstPathPart) (doing something in step2a)
+                        beginning step step2a(during:stop:)@\(#file.firstPathPart) (doing something in step2a)
                             beginning dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
                                 beginning step step3a(during:)@\(#file.firstPathPart) (doing something in step3a)
                                     beginning step step4(during:)@\(#file.firstPathPart) (doing something in step4)
                                         we are in step 4
                                     ending step step4(during:)@\(#file.firstPathPart) (doing something in step4)
                                 ending step step3a(during:)@\(#file.firstPathPart) (doing something in step3a)
-                                aborting execution: for some reason
-                                skipping in an aborted environment step step3b(during:)@\(#file.firstPathPart) (doing something in step3b)
+                                stopping execution: for some reason
+                                skipping in an stopped environment step step3b(during:)@\(#file.firstPathPart) (doing something in step3b)
                             ending dispensible part "calling step3a and step3b in step2a" (we might want to skip step3a and step3b in step2a)
-                        aborted step step2a(during:abort:)@\(#file.firstPathPart) (doing something in step2a)
+                        stopped step step2a(during:stop:)@\(#file.firstPathPart) (doing something in step2a)
                         beginning "calling step2b in step1"
-                            skipping in an aborted environment step step2b(during:)@\(#file.firstPathPart) (doing something in step2b)
+                            skipping in an stopped environment step step2b(during:)@\(#file.firstPathPart) (doing something in step2b)
                         ending "calling step2b in step1"
                     ending optional part "step2" (we usually do not step2)
-                aborted step step1(during:abortInStep2a:)@\(#file.firstPathPart) (doing something in step1)
+                stopped step step1(during:stopStep2a:)@\(#file.firstPathPart) (doing something in step1)
                 """)
         }
         

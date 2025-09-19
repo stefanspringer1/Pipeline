@@ -65,30 +65,14 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
         get async { synchronousExecution.executionPath }
     }
     
-    public func abort(reason: String) async {
-        synchronousExecution.abort(reason: reason)
+    public func stop(reason: String) async {
+        synchronousExecution.stop(reason: reason)
     }
     
-    public var aborted: Bool { synchronousExecution._aborted }
-    
-    /// Pausing the execution (without effect for async execution).
-    public func pause() {
-        synchronousExecution.semaphoreForPause.wait()
-    }
-    
-    /// Proceeding a paused execution.
-    public func proceed() {
-        synchronousExecution.semaphoreForPause.signal()
-    }
+    public var stopped: Bool { synchronousExecution._stopped }
     
     func waitNotPaused() {
-        
-        func waitNotPaused() {
-            synchronousExecution.semaphoreForPause.wait()
-            synchronousExecution.semaphoreForPause.signal()
-        }
-        
-        (synchronousExecution.waitNotPausedFunction ?? waitNotPaused)() // wait if the execution is paused
+        synchronousExecution.waitNotPausedFunction?() // wait if the execution is paused
     }
     
     /// Force all contained work to be executed, even if already executed before.
@@ -284,14 +268,14 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
     
     private func effectuateTest(forStep step: StepID, withDescription description: String?) async -> (execute: Bool, forced: Bool, structuralID: UUID) {
         let structuralID = UUID()
-        if synchronousExecution._aborted || synchronousExecution.executionInfoConsumer.executionAborted {
+        if synchronousExecution._stopped || synchronousExecution.executionInfoConsumer.executionStopped {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
-                    event: .skippingStepInAbortedExecution(
+                    event: .skippingStepInStoppedExecution(
                         id: step,
                         description: description
                     ),
@@ -385,14 +369,14 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
     }
     
     private func after(step: StepID, structuralID: UUID, description: String?, forced: Bool, secondsElapsed: Double) async {
-        if synchronousExecution._aborted {
+        if synchronousExecution._stopped {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
                     metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
-                    event: .abortedStep(
+                    event: .stoppedStep(
                         id: step,
                         description: description
                     ),

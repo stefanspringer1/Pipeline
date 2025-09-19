@@ -5,7 +5,7 @@ public protocol ExecutionMetaData: CustomStringConvertible, Sendable {}
 public protocol ExecutionInfoConsumer<MetaData> {
     associatedtype MetaData: CustomStringConvertible
     func consume(_ executionInfo: ExecutionInfo<MetaData>)
-    var executionAborted: Bool { get }
+    var executionStopped: Bool { get }
 }
 
 public struct StepID: Hashable, CustomStringConvertible, Sendable {
@@ -170,9 +170,9 @@ public enum ExecutionEvent: CustomStringConvertible {
     
     case beginningStep(id: StepID, description: String?, forced: Bool)
     case endingStep(id: StepID, description: String?, forced: Bool)
-    case abortedStep(id: StepID, description: String?)
+    case stoppedStep(id: StepID, description: String?)
     case skippingPreviouslyExecutedStep(id: StepID, description: String?)
-    case skippingStepInAbortedExecution(id: StepID, description: String?)
+    case skippingStepInStoppedExecution(id: StepID, description: String?)
     
     case beginningDispensablePart(name: String, description: String?)
     case endingDispensablePart(name: String, description: String?)
@@ -185,7 +185,7 @@ public enum ExecutionEvent: CustomStringConvertible {
     case beginningDescribedPart(description: String)
     case endingDescribedPart(description: String)
     
-    case abortingExecution(reason: String)
+    case stoppingExecution(reason: String)
     
     case beginningForcingSteps
     case endingForcingSteps
@@ -194,18 +194,18 @@ public enum ExecutionEvent: CustomStringConvertible {
     
     public var description: String {
         switch self {
-        case .abortingExecution(reason: let reason):
-            "aborting execution: \(reason)"
+        case .stoppingExecution(reason: let reason):
+            "stopping execution: \(reason)"
         case .beginningStep(id: let id, description: let description, forced: let forced):
             "beginning \(forced ? "forced " : "")step \(id)\(description != nil ? " (\(description!))" : "")"
         case .endingStep(id: let id, description: let description, forced: let forced):
             "ending \(forced ? "forced " : "")step \(id)\(description != nil ? " (\(description!))" : "")"
         case .skippingPreviouslyExecutedStep(id: let id, description: let description):
             "skipping previously executed step \(id)\(description != nil ? " (\(description!))" : "")"
-        case .skippingStepInAbortedExecution(id: let id, description: let description):
-            "skipping in an aborted environment step \(id)\(description != nil ? " (\(description!))" : "")"
-        case .abortedStep(id: let id, description: let description):
-            "aborted step \(id)\(description != nil ? " (\(description!))" : "")"
+        case .skippingStepInStoppedExecution(id: let id, description: let description):
+            "skipping in an stopped environment step \(id)\(description != nil ? " (\(description!))" : "")"
+        case .stoppedStep(id: let id, description: let description):
+            "stopped step \(id)\(description != nil ? " (\(description!))" : "")"
         case .beginningDispensablePart(name: let name, description: let description):
             "beginning dispensible part \"\(name)\"\(description != nil ? " (\(description!))" : "")"
         case .endingDispensablePart(name: let name, description: let description):
