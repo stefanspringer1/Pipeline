@@ -4,7 +4,7 @@ import Foundation
 
 @Suite(.serialized) struct MixedPipelineTests {
     
-    let metadata = MyMetaData(
+    let metadata = MyMetaData1(
         applicationName: "myapp",
         processID: "precess123",
         workItemInfo: "item123"
@@ -75,9 +75,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
             
-            let execution = AsyncExecution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
+            let execution = AsyncExecution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
             
             await step1(during: execution)
             
@@ -90,9 +90,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
             
-            let execution = AsyncExecution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
+            let execution = AsyncExecution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
             
             await step1(during: execution)
             
@@ -129,9 +129,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
             
-            let execution = AsyncExecution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
+            let execution = AsyncExecution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
             
             await step1(during: execution)
             
@@ -161,9 +161,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
             
-            let execution = AsyncExecution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
+            let execution = AsyncExecution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
             
             await step1(during: execution, abortInStep2a: true)
             

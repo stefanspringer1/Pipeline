@@ -5,7 +5,7 @@ import Localization
 
 @Suite(.serialized) struct LoggingTests {
     
-    let metadata = MyMetaData(
+    let metadata = MyMetaData1(
         applicationName: "myapp",
         processID: "precess123",
         workItemInfo: "item123"
@@ -39,9 +39,9 @@ import Localization
         }
         
         let logger = CollectingLogger()
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true, withType: true, withExecutionPath: true))
+        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true, withType: true, withExecutionPath: true))
         
-        let execution = Execution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
+        let execution = Execution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
         
         step1(during: execution)
         
@@ -65,9 +65,9 @@ import Localization
     @Test func testMessage1() throws {
         
         let logger = CollectingLogger()
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger)
+        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger)
         
-        let execution = Execution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
+        let execution = Execution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
         
         let message = Message(
             id: "values not OK",
@@ -89,10 +89,10 @@ import Localization
         let logger = CollectingLogger()
         
         // NOTE: `excutionInfoFormat: .bareIndented` added:
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
+        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
         
         // NOTE: `language: .de` added:
-        let execution = Execution<MyMetaData>(language: .de, metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
+        let execution = Execution<MyMetaData1>(language: .de, metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
         
         let message = Message(
             id: "values not OK",
@@ -117,10 +117,10 @@ import Localization
         
         let logger = CollectingLogger()
         
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withType: true))
+        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withType: true))
         
         // NOTE: `language: .de` added:
-        let execution = Execution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
+        let execution = Execution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
         
         execution.appease(to: .warning) {
             execution.log(.error, "this was an error")
@@ -148,10 +148,10 @@ import Localization
         
         let logger = CollectingLogger()
         
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withType: true))
+        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withType: true))
         
         // NOTE: `language: .de` added:
-        let execution = AsyncExecution<MyMetaData>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
+        let execution = AsyncExecution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
         
         await execution.appease(to: .warning) {
             await execution.log(.error, "this was an error")

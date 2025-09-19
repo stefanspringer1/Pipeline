@@ -48,7 +48,7 @@ class PrintingLogger: Logger {
     
 }
 
-struct MyMetaData: ExecutionMetaData {
+struct MyMetaData1: ExecutionMetaData {
     
     let applicationName: String
     let processID: String
@@ -56,6 +56,17 @@ struct MyMetaData: ExecutionMetaData {
     
     var description: String {
         "\(applicationName): \(processID)/\(workItemInfo)"
+    }
+}
+
+struct MyMetaData2: ExecutionMetaData {
+    
+    let server: String
+    let processID: String
+    let path: String
+    
+    var description: String {
+        "\(server): \(processID)/\(path)"
     }
 }
 
