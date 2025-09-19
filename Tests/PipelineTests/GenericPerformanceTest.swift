@@ -56,16 +56,19 @@ import Foundation
         
         func testNongeneric() {
             
+            @inline(never)
             func step1Nongeneric(during execution: NongenericExecution) {
                 counter += 1 // do something
                 step2Nongeneric(during: execution)
             }
             
+            @inline(never)
             func step2Nongeneric(during execution: NongenericExecution) {
                 counter += 1 // do something
                 step3Nongeneric(during: execution)
             }
             
+            @inline(never)
             func step3Nongeneric(during execution: NongenericExecution) {
                 counter += 1 // do something
             }
@@ -80,16 +83,19 @@ import Foundation
         
         func testGeneric() {
             
+            @inline(never)
             func step1Generic<MetaData: ExecutionMetaData>(during execution: GenericExecution<MetaData>) {
                 counter += 1 // do something
                 step2Generic(during: execution)
             }
             
+            @inline(never)
             func step2Generic<MetaData: ExecutionMetaData>(during execution: GenericExecution<MetaData>) {
                 counter += 1 // do something
                 step3Generic(during: execution)
             }
             
+            @inline(never)
             func step3Generic<MetaData: ExecutionMetaData>(during execution: GenericExecution<MetaData>) {
                 counter += 1 // do something
             }
