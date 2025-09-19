@@ -10,7 +10,7 @@ import Foundation
         workItemInfo: "item123"
     )
     
-    @Test func parallelTests() async throws {
+    @Test func parallelTest1() async throws {
         
         func step1<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>, number: Int) {
             execution.effectuate("#\(number): doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
@@ -29,7 +29,7 @@ import Foundation
         let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, withMinimalInfoType: .info, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
         let execution = Execution(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
         
-        let numbers = 1...20
+        let numbers = Array(1...20)
         let threads = 5
         
         executeInParallel(batch: numbers, threads: threads) { number in
@@ -39,6 +39,8 @@ import Foundation
             step1(during: parallelExecution, number: number)
             
         }
+        
+        logger.wait() // because this is a concurrent logger, wait until all logging is done!
         
         let expectedSorted = """
             #01: in step1
@@ -84,6 +86,7 @@ import Foundation
             """
         
         let actualResult = logger.messages.map{ $0.trimmingCharacters(in: .whitespacesAndNewlines) }.joined(separator: "\n")
+        print(actualResult)
         let actualResultSorted = logger.messages.map{ $0.trimmingCharacters(in: .whitespacesAndNewlines) }.sorted().joined(separator: "\n")
         
         // we can only compare the sorted messages:

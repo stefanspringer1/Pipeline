@@ -607,23 +607,9 @@ As mentioned above, you have to use `AsyncExecution`, and you can get call synch
 
 ### Execution in a concurrent context
 
-In a concurrent context, use `execution.parallel` to create a copy of an `execution`.
+In a concurrent context, use `execution.parallel` to create a copy of an `execution`. Of course, you then need a logger that can handle conccurent logging.
 
-Example:
-
-```Swift
-dispatchGroup.enter()
-dispatchQueue.async {
-    semaphore.wait()
-    let parallelExecution = execution.parallel
-    mystep(
-        during: parallelExecution,
-        theDate: theData
-    )
-    semaphore.signal()
-    disptachGroup.leave()
-}
-```
+See the example `parallelTest1()` in the tests.
 
 Note that the parallel steps are not registered in the execution database. But the above code migth be part of anther step not executed in parallel, and that one will then be registered.
 

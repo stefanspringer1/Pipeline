@@ -17,20 +17,35 @@ class CollectingLogger: Logger {
     
 }
 
-open class ConcurrentCollectingLogger: Logger {
+class ConcurrentCollectingLogger: Logger {
     
     private var _messages = [String]()
-    var messages: [String] { _messages }
+    let messagesSemaphore = DispatchSemaphore(value: 1)
+    
+    /// Gets the current messages.
+    var messages: [String] {
+        messagesSemaphore.wait()
+        let value = _messages
+        messagesSemaphore.signal()
+        return value
+    }
     
     internal let group = DispatchGroup()
     internal let queue = DispatchQueue(label: "ConcurrentCollectingLogger", qos: .background)
     
     public func log(_ message: String) {
         group.enter()
-        self.queue.async {
+        self.queue.sync {
+            messagesSemaphore.wait()
             self._messages.append(message)
+            messagesSemaphore.signal()
             self.group.leave()
         }
+    }
+    
+    /// Wait until all logging is done.
+    public func wait() {
+        group.wait()
     }
     
 }
@@ -131,7 +146,7 @@ func elapsedTime(of f: () async -> Void) async -> Double {
 
 /// Process the items in `batch` in parallel by the function `worker` using `threads` number of threads.
 public func executeInParallel<Seq: Sequence>(batch: Seq, threads: Int, worker: @escaping (Seq.Element) -> ()) {
-    let queue = DispatchQueue(label: "executeInParallel", attributes: .concurrent)
+    let queue = DispatchQueue(label: "AyncLogger", attributes: .concurrent)
     let group = DispatchGroup()
     let semaphore = DispatchSemaphore(value: threads)
     
