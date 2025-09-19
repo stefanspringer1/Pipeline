@@ -38,10 +38,12 @@ import Foundation
     
     @Test func testExecution() throws {
         
-        let allIterations = 1_000_000 // must be divisible by innerIteration
-        let innerIterations = 1_000
+        let allIterations = 1_000_000 // must be at least 1_000 and divisible by innerIteration
+        let innerIterations = 1_000   // must be at least 100
         
-        #expect(innerIterations < allIterations )
+        #expect(allIterations >= 1_000)
+        #expect(innerIterations >= 100)
+        #expect(innerIterations < allIterations)
         #expect(allIterations % innerIterations == 0)
         
         var timeNongeneric: Double = 0
@@ -113,7 +115,7 @@ import Foundation
         let deviationPercent = (timeGeneric - timeNongeneric) * 100 / timeNongeneric
         print("deviation: \(String(format: "%.1f", deviationPercent)) %")
         
-        #expect(abs(deviationPercent) < 10) // actual deviations should be even < 1 %
+        #expect(abs(deviationPercent) < 10) // actual deviations should be < 1 %, but we do not want a test to fail
         
     }
     
