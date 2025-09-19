@@ -38,71 +38,82 @@ import Foundation
     
     @Test func testExecution() throws {
         
-        let iterations = 10_000_000
+        let allIterations = 1_000_000 // must be divisible by innerIteration
+        let innerIterations = 1_000
         
-        do {
+        #expect(innerIterations < allIterations )
+        #expect(allIterations % innerIterations == 0)
+        
+        var timeNongeneric: Double = 0
+        var timeGeneric: Double = 0
+        
+        var counter = 0
+        
+        let nongenericExecution = NongenericExecution(metadata: metadata)
+        let genericExecution = GenericExecution(metadata: metadata)
+        
+        func testNongeneric() {
             
-            var counter = 0
-            
-            func step1_nongeneric(during execution: NongenericExecution) {
+            func step1Nongeneric(during execution: NongenericExecution) {
                 counter += 1 // do something
-                step2_nongeneric(during: execution)
+                step2Nongeneric(during: execution)
             }
             
-            func step2_nongeneric(during execution: NongenericExecution) {
+            func step2Nongeneric(during execution: NongenericExecution) {
                 counter += 1 // do something
-                step3_nongeneric(during: execution)
+                step3Nongeneric(during: execution)
             }
             
-            func step3_nongeneric(during execution: NongenericExecution) {
+            func step3Nongeneric(during execution: NongenericExecution) {
                 counter += 1 // do something
             }
             
-            let nongenericExecution = NongenericExecution(metadata: metadata)
-            
-            let time_nongeneric = elapsedTime {
-                for _ in 1...iterations {
-                    step1_nongeneric(during: nongenericExecution)
+            timeNongeneric += elapsedTime {
+                for _ in 1...innerIterations {
+                    step1Nongeneric(during: nongenericExecution)
                 }
             }
             
-            #expect(counter == 3 * iterations)
-            
-            print("time non-generic: \(time_nongeneric)")
-            
         }
         
-        do {
+        func testGeneric() {
             
-            var counter = 0
-            
-            func step1_generic<MetaData: ExecutionMetaData>(during execution: GenericExecution<MetaData>) {
+            func step1Generic<MetaData: ExecutionMetaData>(during execution: GenericExecution<MetaData>) {
                 counter += 1 // do something
-                step2_generic(during: execution)
+                step2Generic(during: execution)
             }
             
-            func step2_generic<MetaData: ExecutionMetaData>(during execution: GenericExecution<MetaData>) {
+            func step2Generic<MetaData: ExecutionMetaData>(during execution: GenericExecution<MetaData>) {
                 counter += 1 // do something
-                step3_generic(during: execution)
+                step3Generic(during: execution)
             }
             
-            func step3_generic<MetaData: ExecutionMetaData>(during execution: GenericExecution<MetaData>) {
+            func step3Generic<MetaData: ExecutionMetaData>(during execution: GenericExecution<MetaData>) {
                 counter += 1 // do something
             }
             
-            let genericExecution = GenericExecution(metadata: metadata)
-            
-            let time_generic = elapsedTime {
-                for _ in 1...iterations {
-                    step1_generic(during: genericExecution)
+            timeGeneric += elapsedTime {
+                for _ in 1...innerIterations {
+                    step1Generic(during: genericExecution)
                 }
             }
             
-            #expect(counter == 3 * iterations)
-            
-            print("time generic: \(time_generic)")
-            
         }
+        
+        for _ in 1...(allIterations/innerIterations) {
+            testNongeneric()
+            testGeneric()
+        }
+        
+        #expect(counter == 2 * 3 * allIterations)
+        
+        print("time non-generic: \(timeNongeneric)")
+        print("time generic: \(timeGeneric)")
+        
+        let deviationPercent = (timeGeneric - timeNongeneric) * 100 / timeNongeneric
+        print("deviation: \(String(format: "%.1f", deviationPercent)) %")
+        
+        #expect(abs(deviationPercent) < 10) // actual deviations should be even < 1 %
         
     }
     
