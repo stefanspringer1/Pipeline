@@ -38,7 +38,7 @@ import Foundation
     
     @Test func testExecution() throws {
         
-        let allIterations = 1_000_000 // must be at least 1_000 and divisible by innerIteration
+        let allIterations = 1_000_000 // must be at least 1_000 and divisible by innerIterations
         let innerIterations = 1_000   // must be at least 100
         
         #expect(allIterations >= 1_000)
