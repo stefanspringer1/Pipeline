@@ -61,8 +61,8 @@ public class ConcurrentCollectingLogger: Logger {
 
 public class ExecutionInfoProcessorForLogger: ExecutionEventProcessor {
     
-    private let _metadataInfo: String
-    public var metadataInfo: String { _metadataInfo }
+    public let metadataInfo: String
+    public let metadataInfoForUserInteraction: String
     
     private var logger: Logger
     private let minimalInfoType: InfoType?
@@ -70,11 +70,13 @@ public class ExecutionInfoProcessorForLogger: ExecutionEventProcessor {
     
     init(
         withMetaDataInfo metadataInfo: String,
+        withMetaDataInfoForUserInteraction metadataInfoForUserInteraction: String? = nil,
         logger: Logger,
         withMinimalInfoType minimalInfoType: InfoType? = nil,
         excutionInfoFormat: ExecutionInfoFormat? = nil
     ) {
-        self._metadataInfo = metadataInfo
+        self.metadataInfo = metadataInfo
+        self.metadataInfoForUserInteraction = metadataInfoForUserInteraction ?? metadataInfo
         self.logger = logger
         self.minimalInfoType = minimalInfoType
         self.excutionInfoFormat = excutionInfoFormat
@@ -85,9 +87,9 @@ public class ExecutionInfoProcessorForLogger: ExecutionEventProcessor {
             return
         }
         if let excutionInfoFormat {
-            logger.log(executionEvent.description(format: excutionInfoFormat, withMetaDataInfo: _metadataInfo))
+            logger.log(executionEvent.description(format: excutionInfoFormat, withMetaDataInfo: metadataInfo))
         } else {
-            logger.log(executionEvent.description(withMetaDataInfo: _metadataInfo))
+            logger.log(executionEvent.description(withMetaDataInfo: metadataInfo))
         }
     }
     

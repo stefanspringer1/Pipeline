@@ -12,11 +12,13 @@ The problem of prerequisites for a step (things that must be done beforehand) is
 
 To facilitate further description, we will already introduce some of the types used. You define a complex processing of one “work item” that can be executed within an `Execution` environment. For each work item a separate `Execution` instance has to be created. If more than one work item is to be processed, then more than one `Execution` instance has to be used.
 
-This framework does not provide its own logging implementation. However, the logging used by packages should be able to be formulated independently of the actual logging implementation. Log messages can therefore be generated via methods of the `Execution` instance and then must be processed by an `ExecutionEventProcessor` provided by you. The `ExecutionEventProcessor` must also handle information about the execution of the steps. This information is contained in the `ExecutionEvent` type, which the `ExecutionEventProcessor` must be able to process. More granular error types are available than in most actual logging implementations, which you must then map to the message types of the logging implementation used by your application.
+This framework does not provide its own logging implementation. However, the logging used by packages should be able to be formulated independently of the actual logging implementation. Log messages can therefore be generated via methods of the `Execution` instance and then must be processed by an `ExecutionEventProcessor` provided by you. The `ExecutionEventProcessor` must also handle information about the execution of the steps. All this information is contained in the `ExecutionEvent` type, which the `ExecutionEventProcessor` must be able to process. More granular error types are available than in most actual logging implementations, which you must then map to the message types of the logging implementation used by your application.
 
 When only logging via the `Execution` instance, you can easily build a tree structure from the `ExecutionEvent` instances, see the section about the tree view on logging.
 
-Concerning metadata such as a “process ID”, the pipline steps should not need to know about it. The `ExecutionEventProcessor` should handle any metadata and add it to the actual log entries if required.
+Concerning metadata such as a “process ID”, the pipline steps should not need to know about it. The `ExecutionEventProcessor` should handle any metadata and add it to the actual log entries if required.[^1]
+
+[^1]: If you do need such metadata information in a step, you can always get a textual view on this metadata in the form `metadataInfo` or `metadataInfoForUserInteraction` via the `Execution` object which in turn gets it from the `ExecutionEventProcessor`.
 
 The implementation of `ExecutionEvent` contains methods that simplify the creation of an actual text log entry. Cf. the implementation of `ExecutionInfoProcessorForLogger` in the test cases, which are generally a good way to see the features of this framework in action.
 
@@ -302,9 +304,9 @@ func c_step(
 
 Again, `a_step` and `b_step` can be seen here as requirements for the work done by `c_step`.
 
-When using `c_step`, inside `b_step` the step `a_step` is _not_ being executed, because `a_step` has already been excuted at that time. By default it is assumed that a step does some manipulation of the data, and calling a step  says "I want those manipulation done at this point". This is very common in complex processing scenarios and having this behaviour ensures that a step can be called in isolation and not just as part as a fixed, large processing pipeline, because it formulates itself which prerequisites it needs.[^4]
+When using `c_step`, inside `b_step` the step `a_step` is _not_ being executed, because `a_step` has already been excuted at that time. By default it is assumed that a step does some manipulation of the data, and calling a step  says "I want those manipulation done at this point". This is very common in complex processing scenarios and having this behaviour ensures that a step can be called in isolation and not just as part as a fixed, large processing pipeline, because it formulates itself which prerequisites it needs.[^2]
 
-[^4]: Note that a bad formulation of your logic can get you in trouble with the order of the steps: If `a_step` should be executed before `b_step` and not after it, and when calling `c_step`, `b_step` has already been executed but not `a_step` (so, other than in our example, `a_step` is not given as a requirement for `b_step`), you will get the wrong order of execution. In practice, we never encountered such a problem.
+[^2]: Note that a bad formulation of your logic can get you in trouble with the order of the steps: If `a_step` should be executed before `b_step` and not after it, and when calling `c_step`, `b_step` has already been executed but not `a_step` (so, other than in our example, `a_step` is not given as a requirement for `b_step`), you will get the wrong order of execution. In practice, we never encountered such a problem.
 
 ---
 **Convention**

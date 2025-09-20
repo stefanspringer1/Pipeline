@@ -10,6 +10,7 @@ public final class Execution {
     
     var ExecutionEventProcessor: any ExecutionEventProcessor
     public var metadataInfo: String { ExecutionEventProcessor.metadataInfo }
+    public var metadataInfoForUserInteraction: String { ExecutionEventProcessor.metadataInfoForUserInteraction }
     
     public let stopAtFatalError: Bool
     

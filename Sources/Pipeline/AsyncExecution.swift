@@ -8,7 +8,8 @@ public final actor AsyncExecution {
     
     let synchronousExecution: Execution
     
-    public var metadataInfo: String { synchronousExecution.ExecutionEventProcessor.metadataInfo }
+    public var metadataInfo: String { synchronousExecution.metadataInfo }
+    public var metadataInfoForUserInteraction: String { synchronousExecution.metadataInfoForUserInteraction }
     
     public var synchronous: Execution {
         get async { synchronousExecution }

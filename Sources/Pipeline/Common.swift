@@ -3,11 +3,13 @@ import Foundation
 public protocol ExecutionEventProcessor {
     func process(_ executionEvent: ExecutionEvent)
     var metadataInfo: String { get }
+    var metadataInfoForUserInteraction: String { get }
 }
 
 public protocol AsyncExecutionInfoProcessor {
     func process(_ executionEvent: ExecutionEvent) async
     var metadataInfo: String { get }
+    var metadataInfoForUserInteraction: String { get }
 }
 
 public struct StepID: Hashable, CustomStringConvertible, Sendable {
