@@ -19,7 +19,7 @@ Concerning metadata such as a “process ID”, the pipline steps should not nee
 
 [^1]: If you do need such metadata information in a step, you can always get a textual view on this metadata in the form `metadataInfo` or `metadataInfoForUserInteraction` via the `Execution` object which in turn gets it from the `ExecutionEventProcessor`.
 
-The implementation of `ExecutionEvent` contains methods that simplify the creation of an actual text log entry. Cf. the implementation of `ExecutionEventProcessorForLogger` in the test cases, which are generally a good way to see the features of this framework in action.
+The implementation of `ExecutionEvent` contains methods that simplify the creation of an actual text log entry (cf. the implementation of `ExecutionEventProcessorForLogger` in the test cases).
 
 The framework can also handle the parallel processing of partial work items and handle asynchronous calls.
 
