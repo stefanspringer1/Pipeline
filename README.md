@@ -15,9 +15,7 @@ This framework does not provide its own logging implementation. However, the log
 
 When only logging via the `Execution` instance, you can easily build a tree structure from the `ExecutionEvent` instances.
 
-Concerning metadata such as a “process ID”, pipline steps in general and especially pipline steps from other packages should not need to know about it. The `ExecutionEventProcessor` should handle any metadata and add it to the actual log entries if required, the implementation of `ExecutionEvent` facilitates this. Any more precise data you need for your own steps is generally covered in additional arguments for your steps. (If the metadata information is actually needed during processing in a general form, especially by an external package, it can be requested via the `metadataInfo` or `metadataInfoForUserInteraction` property of the `Execution` which in turn gets the information from the `ExecutionEventProcessor`.)
-
-The implementation of `ExecutionEvent` contains methods that simplify the creation of an actual text log entry (cf. the implementation of `ExecutionEventProcessorForLogger` in the test cases).
+Concerning metadata such as a “process ID”, pipline steps in general and especially pipline steps from other packages should not need to know about it. The `ExecutionEventProcessor` should handle any metadata and add it to the actual log entries if required, the implementation of `ExecutionEvent` facilitates this. Any more precise data you need for your own steps should generally be covered in additional arguments for your steps. (If the metadata information is actually needed during processing in a general form, especially by an external package, it can be requested via the `metadataInfo` or `metadataInfoForUserInteraction` property of the `Execution` which in turn gets the information from the `ExecutionEventProcessor`.)
 
 The framework can also handle the parallel processing of partial work items and handle asynchronous calls.
 
