@@ -149,6 +149,7 @@ import Foundation
             execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 step3aa(during: execution)
                 execution.stop(reason: "cannot proceess any further") // !!!! stop is here !!!!
+                execution.log(.info, "message after the stop") // will be logged!
                 step3ab(during: execution)
             }
         }
@@ -190,6 +191,7 @@ import Foundation
                     {progress} beginning step step3aa(during:stop:)@PipelineTests
                     {progress} ending step step3aa(during:stop:)@PipelineTests
                     {progress} stopping execution: cannot proceess any further
+                    {info} message after the stop
                     {progress} skipping in an stopped environment step step3ab(during:stop:)@PipelineTests
                 {progress} stopped step step2a(during:stop:)@PipelineTests
                 {progress} skipping in an stopped environment step step2b(during:stop:)@PipelineTests

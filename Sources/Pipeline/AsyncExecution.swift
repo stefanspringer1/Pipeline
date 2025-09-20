@@ -153,13 +153,12 @@ public final actor AsyncExecution {
     /// Something that does not run in the normal case but ca be activated. Should use module name as prefix.
     public func optional<T>(named partName: String, description: String? = nil, work: () async throws -> T) async rethrows -> T? {
         let result: T?
-        let structuralID = UUID()
         if synchronousExecution.activatedOptions?.contains(partName) != true || synchronousExecution.dispensedWith?.contains(partName) == true {
             synchronousExecution.ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: synchronousExecution.level,
-                    structuralID: structuralID,
+                    structuralID: nil, // is a leave, no structural ID necessary
                     event: .skippingOptionalPart(
                         name: partName,
                         description: description
@@ -169,6 +168,7 @@ public final actor AsyncExecution {
             )
             result = nil
         } else {
+            let structuralID = UUID()
             synchronousExecution.ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
@@ -203,13 +203,12 @@ public final actor AsyncExecution {
     /// Something that runs in the normal case but ca be dispensed with. Should use module name as prefix.
     public func dispensable<T>(named partName: String, description: String? = nil, work: () async throws -> T) async rethrows -> T? {
         let result: T?
-        let structuralID = UUID()
         if synchronousExecution.dispensedWith?.contains(partName) == true {
             synchronousExecution.ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: synchronousExecution.level,
-                    structuralID: structuralID,
+                    structuralID: nil, // is a leave, no structural ID necessary
                     event: .skippingDispensablePart(
                         name: partName,
                         description: description
@@ -219,6 +218,7 @@ public final actor AsyncExecution {
             )
             result = nil
         } else {
+            let structuralID = UUID()
             synchronousExecution.ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
@@ -255,14 +255,13 @@ public final actor AsyncExecution {
         try await execute(step: nil, description: nil, force: false, appeaseTo: appeaseType, work: work)
     }
     
-    private func effectuateTest(forStep step: StepID, withDescription description: String?) async -> (execute: Bool, forced: Bool, structuralID: UUID) {
-        let structuralID = UUID()
+    private func effectuateTest(forStep step: StepID, withDescription description: String?) async -> (execute: Bool, forced: Bool, structuralID: UUID?) {
         if synchronousExecution._stopped {
             synchronousExecution.ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: synchronousExecution.level,
-                    structuralID: structuralID,
+                    structuralID: nil, // is a leave, no structural ID necessary
                     event: .skippingStepInStoppedExecution(
                         id: step,
                         description: description
@@ -270,8 +269,9 @@ public final actor AsyncExecution {
                     effectuationStack: synchronousExecution.effectuationStack
                 )
             )
-            return (execute: false, forced: false, structuralID: structuralID)
+            return (execute: false, forced: false, structuralID: nil)
         } else if !synchronousExecution.executedSteps.contains(step) {
+            let structuralID = UUID()
             synchronousExecution.ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
@@ -288,6 +288,7 @@ public final actor AsyncExecution {
             synchronousExecution.executedSteps.insert(step)
             return (execute: true, forced: false, structuralID: structuralID)
         } else if synchronousExecution.forceValues.last == true {
+            let structuralID = UUID()
             synchronousExecution.ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
@@ -308,7 +309,7 @@ public final actor AsyncExecution {
                 ExecutionInfo(
                     type: .progress,
                     level: synchronousExecution.level,
-                    structuralID: structuralID,
+                    structuralID: nil, // is a leave, no structural ID necessary
                     event: .skippingPreviouslyExecutedStep(
                         id: step,
                         description: description
@@ -316,7 +317,7 @@ public final actor AsyncExecution {
                     effectuationStack: synchronousExecution.effectuationStack
                 )
             )
-            return (execute: false, forced: false, structuralID: structuralID)
+            return (execute: false, forced: false, structuralID: nil)
         }
     }
     
@@ -351,7 +352,7 @@ public final actor AsyncExecution {
         return result
     }
     
-    private func after(step: StepID, structuralID: UUID, description: String?, forced: Bool, secondsElapsed: Double) async {
+    private func after(step: StepID, structuralID: UUID?, description: String?, forced: Bool, secondsElapsed: Double) async {
         if synchronousExecution._stopped {
             synchronousExecution.ExecutionInfoProcessor.process(
                 ExecutionInfo(

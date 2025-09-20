@@ -557,6 +557,10 @@ func bye_step(
 
 As mentioned above, you have to use `AsyncExecution`, and you can get call synchronous step with the `Execution` instance `execution.synchronous`.
 
+### The tree view on logging and structural IDs
+
+The `ExecutionInfo` instance can actually seen as part of a tree, e.g. the begin message of a step together with the end message for the same message can be seen as a node containing everything that is logged in-between. Your might want to actually build a tree from it, and the `level` contained in the `ExecutionInfo` is actually all you for this, but all `ExecutionInfo` instances that do not act as a leave in this tree view have a UUID `structuralID` to help you with that.
+
 ### Parallel execution
 
 Use `execution.parallel` to create a copy of an `execution` to use in a parallelization. Of course, you then need a logger that can handle conccurent logging.

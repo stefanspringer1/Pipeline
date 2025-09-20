@@ -185,4 +185,204 @@ import Localization
             """)
     }
     
+    @Test func testStructuralIDs() throws {
+        
+        func step1(during execution: Execution) {
+            execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                step2(during: execution)
+            }
+        }
+        
+        func step2(during execution: Execution) {
+            execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                execution.log(.info, "hello")
+                execution.dispensable(named: "calling step 3") {
+                    step3(during: execution)
+                    step3(during: execution)
+                    execution.force {
+                        step3(during: execution)
+                    }
+                }
+                execution.dispensable(named: "dispensable message") {
+                    execution.log(.info, "dispensed?")
+                }
+                execution.optional(named: "option 1") {
+                    execution.log(.info, "option 1?")
+                }
+                execution.optional(named: "option 2") {
+                    execution.log(.info, "option 2?")
+                }
+            }
+        }
+        
+        func step3(during execution: Execution) {
+            execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                execution.force {
+                    execution.log(.info, "hello again")
+                }
+            }
+        }
+        
+        let logger = CollectingLogger()
+        let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(
+            withMetaDataInfo: metadata.description,
+            logger: logger,
+            excutionInfoFormat: ExecutionInfoFormat(
+                addIndentation: true,
+                addType: true,
+                addStructuralID: true
+            )
+        )
+        
+        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor, withOptions: ["option 2"], dispensingWith: ["dispensable message"])
+        
+        step1(during: execution)
+        
+        struct UUIDReplacements {
+            var count = 0
+            var mapped = [String:String]()
+            
+            mutating func replacement(for token: String) -> String {
+                if let existing = mapped[token] {
+                    return existing
+                } else {
+                    count += 1
+                    let replacement = "#\(count)"
+                    mapped[token] = replacement
+                    return replacement
+                }
+            }
+            
+            mutating func doReplacements(in text: String) -> String {
+                var parts = [Substring]()
+                var rest = Substring(text)
+                while let match = rest.firstMatch(of: /[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/) {
+                    parts.append(rest[..<match.range.lowerBound])
+                    parts.append(Substring(replacement(for: String(rest[match.range.lowerBound..<match.range.upperBound]))))
+                    rest = rest[match.range.upperBound...]
+                }
+                parts.append(rest)
+                return parts.joined()
+            }
+                    
+        }
+        
+        var uuidReplacements = UUIDReplacements()
+        
+        #expect(uuidReplacements.doReplacements(in: logger.messages.joined(separator: "\n")) == """
+            {progress} beginning step step1(during:)@PipelineTests <#1>
+                {progress} beginning step step2(during:)@PipelineTests <#2>
+                    {info} hello <>
+                    {progress} beginning dispensible part "calling step 3" <#3>
+                        {progress} beginning step step3(during:)@PipelineTests <#4>
+                            {progress} beginning forcing steps <#5>
+                                {info} hello again <>
+                            {progress} ending forcing steps <#5>
+                        {progress} ending step step3(during:)@PipelineTests <#4>
+                        {progress} skipping previously executed step step3(during:)@PipelineTests <>
+                        {progress} beginning forcing steps <#6>
+                            {progress} beginning forced step step3(during:)@PipelineTests <#7>
+                                {progress} beginning forcing steps <#8>
+                                    {info} hello again <>
+                                {progress} ending forcing steps <#8>
+                            {progress} ending forced step step3(during:)@PipelineTests <#7>
+                        {progress} ending forcing steps <#6>
+                    {progress} ending dispensible part "calling step 3" <#3>
+                    {progress} skipping dispensible part "dispensable message" <>
+                    {progress} skipping optional part "option 1" <>
+                    {progress} beginning optional part "option 2" <#9>
+                        {info} option 2? <>
+                    {progress} ending optional part "option 2" <#9>
+                {progress} ending step step2(during:)@PipelineTests <#2>
+            {progress} ending step step1(during:)@PipelineTests <#1>
+            """
+        )
+    }
+    
+    @Test func testStructuralIDsWithStop() throws {
+        
+        func step1(during execution: Execution) {
+            execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                step2(during: execution)
+            }
+        }
+        
+        func step2(during execution: Execution) {
+            execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                execution.dispensable(named: "calling step 3") {
+                    execution.stop(reason: "not calling step 3")
+                    step3(during: execution)
+                }
+                execution.log(.info, "hello again")
+            }
+        }
+        
+        func step3(during execution: Execution) {
+            execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                execution.force {
+                    execution.log(.info, "hello")
+                }
+            }
+        }
+        
+        let logger = CollectingLogger()
+        let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(
+            withMetaDataInfo: metadata.description,
+            logger: logger,
+            excutionInfoFormat: ExecutionInfoFormat(
+                addIndentation: true,
+                addType: true,
+                addStructuralID: true
+            )
+        )
+        
+        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor, withOptions: ["option 2"], dispensingWith: ["dispensable message"])
+        
+        step1(during: execution)
+        
+        struct UUIDReplacements {
+            var count = 0
+            var mapped = [String:String]()
+            
+            mutating func replacement(for token: String) -> String {
+                if let existing = mapped[token] {
+                    return existing
+                } else {
+                    count += 1
+                    let replacement = "#\(count)"
+                    mapped[token] = replacement
+                    return replacement
+                }
+            }
+            
+            mutating func doReplacements(in text: String) -> String {
+                var parts = [Substring]()
+                var rest = Substring(text)
+                while let match = rest.firstMatch(of: /[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/) {
+                    parts.append(rest[..<match.range.lowerBound])
+                    parts.append(Substring(replacement(for: String(rest[match.range.lowerBound..<match.range.upperBound]))))
+                    rest = rest[match.range.upperBound...]
+                }
+                parts.append(rest)
+                return parts.joined()
+            }
+                    
+        }
+        
+        var uuidReplacements = UUIDReplacements()
+        
+        #expect(uuidReplacements.doReplacements(in: logger.messages.joined(separator: "\n")) == """
+            {progress} beginning step step1(during:)@PipelineTests <#1>
+                {progress} beginning step step2(during:)@PipelineTests <#2>
+                    {progress} beginning dispensible part "calling step 3" <#3>
+                        {progress} stopping execution: not calling step 3 <>
+                        {progress} skipping in an stopped environment step step3(during:)@PipelineTests <>
+                    {progress} ending dispensible part "calling step 3" <#3>
+                    {info} hello again <>
+                {progress} stopped step step2(during:)@PipelineTests <#2>
+            {progress} stopped step step1(during:)@PipelineTests <#1>
+            """
+        )
+    }
+    
 }

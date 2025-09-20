@@ -80,19 +80,22 @@ public struct ExecutionInfoFormat {
     public let addIndentation: Bool
     public let addType: Bool
     public let addExecutionPath: Bool
+    public let addStructuralID: Bool
     
     public init(
         withTime: Bool = false,
         addMetaDataInfo: Bool = false,
         addIndentation: Bool = false,
         addType: Bool = false,
-        addExecutionPath: Bool = false
+        addExecutionPath: Bool = false,
+        addStructuralID: Bool = false
     ) {
         self.withTime = withTime
         self.addMetaDataInfo = addMetaDataInfo
         self.addIndentation = addIndentation
         self.addType = addType
         self.addExecutionPath = addExecutionPath
+        self.addStructuralID = addStructuralID
     }
 }
 
@@ -102,7 +105,7 @@ public struct ExecutionInfo {
     public let originalType: InfoType? // non-appeased
     public let time: Date
     public let level: Int
-    public let structuralID: UUID
+    public let structuralID: UUID? // not for leaves
     public let event: ExecutionEvent
     public let effectuationStack: [Effectuation]
     
@@ -113,7 +116,7 @@ public struct ExecutionInfo {
         originalType: InfoType? = nil,
         time: Date = Date.now,
         level: Int,
-        structuralID: UUID,
+        structuralID: UUID?,
         event: ExecutionEvent,
         effectuationStack: [Effectuation]
     ) {
@@ -133,6 +136,7 @@ public struct ExecutionInfo {
             addIndentation: true,
             addType: true,
             addExecutionPath: true,
+            addStructuralID: false,
             withMetaDataInfo: withMetaDataInfo
         )
     }
@@ -142,7 +146,8 @@ public struct ExecutionInfo {
         addMetaDataInfo: Bool = false,
         addIndentation: Bool = false,
         addType: Bool = false,
-        addExecutionPath: Bool,
+        addExecutionPath: Bool = false,
+        addStructuralID: Bool = false,
         withMetaDataInfo: String? = nil
     ) -> String {
         [
@@ -151,7 +156,8 @@ public struct ExecutionInfo {
             addIndentation && level > 0 ? "\(String(repeating: " ", count: level * 4 - 1))" : nil,
             addType ? "{\(type)}" : nil,
             event.description,
-            addExecutionPath && !effectuationStack.isEmpty ? "[@@ \(isMessage() ? effectuationStack.executionPath : effectuationStack.executionPathForEffectuation)]" : nil
+            addExecutionPath && !effectuationStack.isEmpty ? "[@@ \(isMessage() ? effectuationStack.executionPath : effectuationStack.executionPathForEffectuation)]" : nil,
+            addStructuralID ? "<\(structuralID?.description ?? "")>" : nil
         ].compactMap({ $0 }).joined(separator: " ")
     }
     
@@ -162,6 +168,7 @@ public struct ExecutionInfo {
             addIndentation: executionInfoFormat.addIndentation,
             addType: executionInfoFormat.addType,
             addExecutionPath: executionInfoFormat.addExecutionPath,
+            addStructuralID: executionInfoFormat.addStructuralID,
             withMetaDataInfo: withMetaDataInfo
         )
     }
