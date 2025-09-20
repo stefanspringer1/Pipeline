@@ -59,7 +59,7 @@ public class ConcurrentCollectingLogger: Logger {
     
 }
 
-public class ExecutionInfoProcessorForLogger: ExecutionInfoProcessor {
+public class ExecutionInfoProcessorForLogger: ExecutionEventProcessor {
     
     private let _metadataInfo: String
     public var metadataInfo: String { _metadataInfo }
@@ -80,14 +80,14 @@ public class ExecutionInfoProcessorForLogger: ExecutionInfoProcessor {
         self.excutionInfoFormat = excutionInfoFormat
     }
     
-    public func process(_ executionInfo: ExecutionInfo) {
-        if let minimalInfoType, executionInfo.type < minimalInfoType {
+    public func process(_ executionEvent: ExecutionEvent) {
+        if let minimalInfoType, executionEvent.type < minimalInfoType {
             return
         }
         if let excutionInfoFormat {
-            logger.log(executionInfo.description(format: excutionInfoFormat, withMetaDataInfo: _metadataInfo))
+            logger.log(executionEvent.description(format: excutionInfoFormat, withMetaDataInfo: _metadataInfo))
         } else {
-            logger.log(executionInfo.description(withMetaDataInfo: _metadataInfo))
+            logger.log(executionEvent.description(withMetaDataInfo: _metadataInfo))
         }
     }
     

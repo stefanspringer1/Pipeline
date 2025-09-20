@@ -8,7 +8,7 @@ public final actor AsyncExecution {
     
     let synchronousExecution: Execution
     
-    public var metadataInfo: String { synchronousExecution.ExecutionInfoProcessor.metadataInfo }
+    public var metadataInfo: String { synchronousExecution.ExecutionEventProcessor.metadataInfo }
     
     public var synchronous: Execution {
         get async { synchronousExecution }
@@ -25,7 +25,7 @@ public final actor AsyncExecution {
     
     public var parallel: AsyncExecution {
         AsyncExecution(
-            ExecutionInfoProcessor: synchronousExecution.ExecutionInfoProcessor,
+            ExecutionEventProcessor: synchronousExecution.ExecutionEventProcessor,
             effectuationStack: synchronousExecution._effectuationStack,
             waitNotPausedFunction: synchronousExecution.waitNotPausedFunction
         )
@@ -34,7 +34,7 @@ public final actor AsyncExecution {
     public init(
         language: Language = .en,
         processID: String? = nil,
-        ExecutionInfoProcessor: any ExecutionInfoProcessor,
+        ExecutionEventProcessor: any ExecutionEventProcessor,
         stopAtFatalError: Bool = true,
         effectuationStack: [Effectuation] = [Effectuation](),
         withOptions activatedOptions: Set<String>? = nil,
@@ -44,7 +44,7 @@ public final actor AsyncExecution {
     ) {
         self.synchronousExecution = Execution(
             language: language,
-            ExecutionInfoProcessor: ExecutionInfoProcessor,
+            ExecutionEventProcessor: ExecutionEventProcessor,
             stopAtFatalError: stopAtFatalError,
             effectuationStack: effectuationStack,
             withOptions: activatedOptions,
@@ -102,8 +102,8 @@ public final actor AsyncExecution {
     /// Executes always.
     public func force<T>(work: () async throws -> T) async rethrows -> T? {
         let structuralID = UUID()
-        synchronousExecution.ExecutionInfoProcessor.process(
-            ExecutionInfo(
+        synchronousExecution.ExecutionEventProcessor.process(
+            ExecutionEvent(
                 type: .progress,
                 level: synchronousExecution.level,
                 structuralID: structuralID,
@@ -115,8 +115,8 @@ public final actor AsyncExecution {
         
         func rewind() async {
             synchronousExecution._effectuationStack.removeLast()
-            synchronousExecution.ExecutionInfoProcessor.process(
-                ExecutionInfo(
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -154,8 +154,8 @@ public final actor AsyncExecution {
     public func optional<T>(named partName: String, description: String? = nil, work: () async throws -> T) async rethrows -> T? {
         let result: T?
         if synchronousExecution.activatedOptions?.contains(partName) != true || synchronousExecution.dispensedWith?.contains(partName) == true {
-            synchronousExecution.ExecutionInfoProcessor.process(
-                ExecutionInfo(
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: nil, // is a leave, no structural ID necessary
@@ -169,8 +169,8 @@ public final actor AsyncExecution {
             result = nil
         } else {
             let structuralID = UUID()
-            synchronousExecution.ExecutionInfoProcessor.process(
-                ExecutionInfo(
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -184,8 +184,8 @@ public final actor AsyncExecution {
             synchronousExecution._effectuationStack.append(.optionalPart(name: partName, description: description))
             result = try await execute(step: nil, description: nil, force: false, work: work)
             synchronousExecution._effectuationStack.removeLast()
-            synchronousExecution.ExecutionInfoProcessor.process(
-                ExecutionInfo(
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -204,8 +204,8 @@ public final actor AsyncExecution {
     public func dispensable<T>(named partName: String, description: String? = nil, work: () async throws -> T) async rethrows -> T? {
         let result: T?
         if synchronousExecution.dispensedWith?.contains(partName) == true {
-            synchronousExecution.ExecutionInfoProcessor.process(
-                ExecutionInfo(
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: nil, // is a leave, no structural ID necessary
@@ -219,8 +219,8 @@ public final actor AsyncExecution {
             result = nil
         } else {
             let structuralID = UUID()
-            synchronousExecution.ExecutionInfoProcessor.process(
-                ExecutionInfo(
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -234,8 +234,8 @@ public final actor AsyncExecution {
             synchronousExecution._effectuationStack.append(.dispensablePart(name: partName, description: description))
             result = try await execute(step: nil, description: description, force: false, work: work)
             synchronousExecution._effectuationStack.removeLast()
-            synchronousExecution.ExecutionInfoProcessor.process(
-                ExecutionInfo(
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -257,8 +257,8 @@ public final actor AsyncExecution {
     
     private func effectuateTest(forStep step: StepID, withDescription description: String?) async -> (execute: Bool, forced: Bool, structuralID: UUID?) {
         if synchronousExecution._stopped {
-            synchronousExecution.ExecutionInfoProcessor.process(
-                ExecutionInfo(
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: nil, // is a leave, no structural ID necessary
@@ -272,8 +272,8 @@ public final actor AsyncExecution {
             return (execute: false, forced: false, structuralID: nil)
         } else if !synchronousExecution.executedSteps.contains(step) {
             let structuralID = UUID()
-            synchronousExecution.ExecutionInfoProcessor.process(
-                ExecutionInfo(
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -289,8 +289,8 @@ public final actor AsyncExecution {
             return (execute: true, forced: false, structuralID: structuralID)
         } else if synchronousExecution.forceValues.last == true {
             let structuralID = UUID()
-            synchronousExecution.ExecutionInfoProcessor.process(
-                ExecutionInfo(
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -305,8 +305,8 @@ public final actor AsyncExecution {
             synchronousExecution.executedSteps.insert(step)
             return (execute: true, forced: true, structuralID: structuralID)
         } else {
-            synchronousExecution.ExecutionInfoProcessor.process(
-                ExecutionInfo(
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: nil, // is a leave, no structural ID necessary
@@ -324,8 +324,8 @@ public final actor AsyncExecution {
     /// Logging some work (that is not a step) as progress.
     public func doing<T>(withID id: String? = nil, _ description: String, work: () async throws -> T) async rethrows -> T? {
         let structuralID = UUID()
-        synchronousExecution.ExecutionInfoProcessor.process(
-            ExecutionInfo(
+        synchronousExecution.ExecutionEventProcessor.process(
+            ExecutionEvent(
                 type: .progress,
                 level: synchronousExecution.level,
                 structuralID: structuralID,
@@ -338,8 +338,8 @@ public final actor AsyncExecution {
         synchronousExecution._effectuationStack.append(.describedPart(description: description))
         let result = try await work()
         synchronousExecution._effectuationStack.removeLast()
-        synchronousExecution.ExecutionInfoProcessor.process(
-            ExecutionInfo(
+        synchronousExecution.ExecutionEventProcessor.process(
+            ExecutionEvent(
                 type: .progress,
                 level: synchronousExecution.level,
                 structuralID: structuralID,
@@ -354,8 +354,8 @@ public final actor AsyncExecution {
     
     private func after(step: StepID, structuralID: UUID?, description: String?, forced: Bool, secondsElapsed: Double) async {
         if synchronousExecution._stopped {
-            synchronousExecution.ExecutionInfoProcessor.process(
-                ExecutionInfo(
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
@@ -367,8 +367,8 @@ public final actor AsyncExecution {
                 )
             )
         } else {
-            synchronousExecution.ExecutionInfoProcessor.process(
-                ExecutionInfo(
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,

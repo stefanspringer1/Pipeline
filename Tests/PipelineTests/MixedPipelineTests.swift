@@ -77,7 +77,7 @@ import Foundation
             let logger = CollectingLogger()
             let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = AsyncExecution(ExecutionInfoProcessor: myExecutionInfoProcessor)
+            let execution = AsyncExecution(ExecutionEventProcessor: myExecutionInfoProcessor)
             
             await step1(during: execution)
             
@@ -92,7 +92,7 @@ import Foundation
             let logger = CollectingLogger()
             let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = AsyncExecution(ExecutionInfoProcessor: myExecutionInfoProcessor, withOptions: ["step2"])
+            let execution = AsyncExecution(ExecutionEventProcessor: myExecutionInfoProcessor, withOptions: ["step2"])
             
             await step1(during: execution)
             
@@ -131,7 +131,7 @@ import Foundation
             let logger = CollectingLogger()
             let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = AsyncExecution(ExecutionInfoProcessor: myExecutionInfoProcessor, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
+            let execution = AsyncExecution(ExecutionEventProcessor: myExecutionInfoProcessor, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
             
             await step1(during: execution)
             
@@ -163,7 +163,7 @@ import Foundation
             let logger = CollectingLogger()
             let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = AsyncExecution(ExecutionInfoProcessor: myExecutionInfoProcessor, withOptions: ["step2"])
+            let execution = AsyncExecution(ExecutionEventProcessor: myExecutionInfoProcessor, withOptions: ["step2"])
             
             await step1(during: execution, stopStep2a: true)
             

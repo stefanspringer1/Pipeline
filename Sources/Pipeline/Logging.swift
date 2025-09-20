@@ -50,8 +50,8 @@ extension Execution {
             actualType = type
             orginalType = nil
         }
-        ExecutionInfoProcessor.process(
-            ExecutionInfo(
+        ExecutionEventProcessor.process(
+            ExecutionEvent(
                 type: actualType,
                 originalType: orginalType,
                 level: level,
@@ -92,8 +92,8 @@ extension AsyncExecution {
             actualType = type
             orginalType = nil
         }
-        synchronousExecution.ExecutionInfoProcessor.process(
-            ExecutionInfo(
+        synchronousExecution.ExecutionEventProcessor.process(
+            ExecutionEvent(
                 type: actualType,
                 originalType: orginalType,
                 level: synchronousExecution.level,

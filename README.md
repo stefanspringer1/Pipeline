@@ -12,11 +12,11 @@ The problem of prerequisites for a step (things that must be done beforehand) is
 
 To facilitate further description, we will already introduce some of the types used. You define a complex processing of one “work item” that can be executed within an `Execution` environment. For each work item a separate `Execution` instance has to be created. If more than one work item is to be processed, then more than one `Execution` instance has to be used.
 
-This framework does not provide its own logging implementation. However, the logging used by packages should be able to be formulated independently of the actual logging implementation. Log messages can therefore be generated via methods of the `Execution` instance and then must be processed by an `ExecutionInfoProcessor` provided by you. The `ExecutionInfoProcessor` must also handle information about the execution of the steps. This information is contained in the `ExecutionInfo` type, which the `ExecutionInfoProcessor` must be able to process. More granular error types are available than in most actual logging implementations, which you must then map to the message types of the logging implementation used by your application.
+This framework does not provide its own logging implementation. However, the logging used by packages should be able to be formulated independently of the actual logging implementation. Log messages can therefore be generated via methods of the `Execution` instance and then must be processed by an `ExecutionEventProcessor` provided by you. The `ExecutionEventProcessor` must also handle information about the execution of the steps. This information is contained in the `ExecutionEvent` type, which the `ExecutionEventProcessor` must be able to process. More granular error types are available than in most actual logging implementations, which you must then map to the message types of the logging implementation used by your application.
 
-Concerning metadata such as a “process ID”, the pipline steps should not need to know about it. The `ExecutionInfoProcessor` should handle any metadata and add it to the actual log entries if required.
+Concerning metadata such as a “process ID”, the pipline steps should not need to know about it. The `ExecutionEventProcessor` should handle any metadata and add it to the actual log entries if required.
 
-The implementation of `ExecutionInfo` contains methods that simplify the creation of an actual text log entry. Cf. the implementation of `ExecutionInfoProcessorForLogger` in the test cases, which are generally a good way to see the features of this framework in action.
+The implementation of `ExecutionEvent` contains methods that simplify the creation of an actual text log entry. Cf. the implementation of `ExecutionInfoProcessorForLogger` in the test cases, which are generally a good way to see the features of this framework in action.
 
 The framework can also handle the parallel processing of partial work items and handle asynchronous calls (see the section about working in asynchronous contexts).
 
@@ -58,16 +58,16 @@ import Pipeline
 
 The first thing you need it an instance to process messages from the execution, reporting if a step has beeen begun etc. The processing of these messages always has to be via a simple synchronous methods, no matter if the actual logging used behind the scenes is asynchronous or not. Most logging environment are working with such a synchronous method.
 
-You need an instance conforming to `ExecutionInfoProcessor`
+You need an instance conforming to `ExecutionEventProcessor`
 
 ```Swift
-public protocol ExecutionInfoProcessor {
-    func process(_ executionInfo: ExecutionInfo)
+public protocol ExecutionEventProcessor {
+    func process(_ executionEvent: ExecutionEvent)
     var metadataInfo: String { get }
 }
 ```
 
-If the metadata information is actually needed during processing (in the general case, this should not be the case), it can be requested via the `metadataInfo` property of the `Execution` which in turn gets the information from the `ExecutionInfoProcessor`. Note that in the general case the metadata should contain the information about the current work item, so not only a new `Execution` has to be created for each work item, but usually also a new `ExecutionInfoProcessor` has to be created.
+If the metadata information is actually needed during processing (in the general case, this should not be the case), it can be requested via the `metadataInfo` property of the `Execution` which in turn gets the information from the `ExecutionEventProcessor`. Note that in the general case the metadata should contain the information about the current work item, so not only a new `Execution` has to be created for each work item, but usually also a new `ExecutionEventProcessor` has to be created.
 
 See the `ExecutionInfoProcessorForLogger` example in the test cases.
 
@@ -77,7 +77,7 @@ Then, for each work item that you want to process (whatever your work items migh
 let logger = PrintingLogger()
 let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger)
 
-let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor)
+let execution = Execution(ExecutionEventProcessor: myExecutionInfoProcessor)
 ```
 
 The step you call (in the following example: `myWork_step`) might have any other arguments besides the `Execution` and some logger, and the postfix `_step` is only for convention. Your step might be implemented as follows:
@@ -479,7 +479,7 @@ The resolving of a job name and the call of the appropriate job is then done as 
         
         let logger = PrintingLogger()
         let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger)
-        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor)
+        let execution = Execution(ExecutionEventProcessor: myExecutionInfoProcessor)
         
         jobFunction(
             execution,
@@ -559,7 +559,7 @@ As mentioned above, you have to use `AsyncExecution`, and you can get call synch
 
 ### The tree view on logging and structural IDs
 
-The `ExecutionInfo` instance can actually seen as part of a tree, e.g. the begin message of a step together with the end message for the same message can be seen as a node containing everything that is logged in-between. Your might want to actually build a tree from it, and the `level` contained in the `ExecutionInfo` is actually all you for this, but all `ExecutionInfo` instances that do not act as a leave in this tree view have a UUID `structuralID` to help you with that.
+The `ExecutionEvent` instance can actually seen as part of a tree, e.g. the begin message of a step together with the end message for the same message can be seen as a node containing everything that is logged in-between. Your might want to actually build a tree from it, and the `level` contained in the `ExecutionEvent` is actually all you need for this, but all `ExecutionEvent` instances that do not act as a leave in this tree view have a UUID `structuralID` to help you with that.
 
 ### Parallel execution
 

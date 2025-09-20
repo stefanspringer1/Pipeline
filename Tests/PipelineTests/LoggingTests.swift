@@ -41,7 +41,7 @@ import Localization
         let logger = CollectingLogger()
         let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true, addType: true, addExecutionPath: true))
         
-        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor)
+        let execution = Execution(ExecutionEventProcessor: myExecutionInfoProcessor)
         
         step1(during: execution)
         
@@ -67,7 +67,7 @@ import Localization
         let logger = CollectingLogger()
         let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger)
         
-        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor)
+        let execution = Execution(ExecutionEventProcessor: myExecutionInfoProcessor)
         
         let message = Message(
             id: "values not OK",
@@ -92,7 +92,7 @@ import Localization
         let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
         
         // NOTE: `language: .de` added:
-        let execution = Execution(language: .de, ExecutionInfoProcessor: myExecutionInfoProcessor)
+        let execution = Execution(language: .de, ExecutionEventProcessor: myExecutionInfoProcessor)
         
         let message = Message(
             id: "values not OK",
@@ -125,7 +125,7 @@ import Localization
         )
         
         // NOTE: `language: .de` added:
-        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor)
+        let execution = Execution(ExecutionEventProcessor: myExecutionInfoProcessor)
         
         execution.appease(to: .warning) {
             execution.log(.error, "this was an error")
@@ -161,7 +161,7 @@ import Localization
         )
         
         // NOTE: `language: .de` added:
-        let execution = AsyncExecution(ExecutionInfoProcessor: myExecutionInfoProcessor)
+        let execution = AsyncExecution(ExecutionEventProcessor: myExecutionInfoProcessor)
         
         await execution.appease(to: .warning) {
             await execution.log(.error, "this was an error")
@@ -234,7 +234,7 @@ import Localization
             )
         )
         
-        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor, withOptions: ["option 2"], dispensingWith: ["dispensable message"])
+        let execution = Execution(ExecutionEventProcessor: myExecutionInfoProcessor, withOptions: ["option 2"], dispensingWith: ["dispensable message"])
         
         step1(during: execution)
         
@@ -336,7 +336,7 @@ import Localization
             )
         )
         
-        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor, withOptions: ["option 2"], dispensingWith: ["dispensable message"])
+        let execution = Execution(ExecutionEventProcessor: myExecutionInfoProcessor, withOptions: ["option 2"], dispensingWith: ["dispensable message"])
         
         step1(during: execution)
         

@@ -1,12 +1,12 @@
 import Foundation
 
-public protocol ExecutionInfoProcessor {
-    func process(_ executionInfo: ExecutionInfo)
+public protocol ExecutionEventProcessor {
+    func process(_ executionEvent: ExecutionEvent)
     var metadataInfo: String { get }
 }
 
 public protocol AsyncExecutionInfoProcessor {
-    func process(_ executionInfo: ExecutionInfo) async
+    func process(_ executionEvent: ExecutionEvent) async
     var metadataInfo: String { get }
 }
 
@@ -99,14 +99,14 @@ public struct ExecutionInfoFormat {
     }
 }
 
-public struct ExecutionInfo {
+public struct ExecutionEvent {
     
     public let type: InfoType
     public let originalType: InfoType? // non-appeased
     public let time: Date
     public let level: Int
     public let structuralID: UUID? // not for leaves
-    public let event: ExecutionEvent
+    public let event: ExecutionCoreEvent
     public let effectuationStack: [Effectuation]
     
     public func isMessage() -> Bool { if case .message = event { true } else { false } }
@@ -117,7 +117,7 @@ public struct ExecutionInfo {
         time: Date = Date.now,
         level: Int,
         structuralID: UUID?,
-        event: ExecutionEvent,
+        event: ExecutionCoreEvent,
         effectuationStack: [Effectuation]
     ) {
         self.type = type
@@ -175,7 +175,7 @@ public struct ExecutionInfo {
     
 }
 
-public enum ExecutionEvent: CustomStringConvertible {
+public enum ExecutionCoreEvent: CustomStringConvertible {
     
     case beginningStep(id: StepID, description: String?, forced: Bool)
     case endingStep(id: StepID, description: String?, forced: Bool)
