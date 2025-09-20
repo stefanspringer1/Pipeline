@@ -30,7 +30,9 @@ import Foundation
             logger: logger,
             excutionInfoFormat: ExecutionInfoFormat(
                 addIndentation: true,
-                addStructuralID: true
+                addType: true,
+                addExecutionPath: true,
+                addStructuralID: true,
             )
         )
         
@@ -43,8 +45,8 @@ import Foundation
         }
         
         #expect(uuidReplacements.doReplacements(in: logger.messages.joined(separator: "\n")) == """
-            beginning step step1(during:)@PipelineTests <#1>
-                beginning step step2(during:)@PipelineTests <#2>
+            {progress} beginning step step1(during:)@PipelineTests <#1>
+                {progress} beginning step step2(during:)@PipelineTests [@@ step step1(during:)@PipelineTests -> ] <#2>
             THROWN ERROR: error in step 2!
             """)
         
@@ -54,23 +56,29 @@ import Foundation
         
         func step1(during execution: Execution)  {
             execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-                do {
-                    try step2(during: execution)
-                } catch {
-                    execution.log(.error, "catched the following error in in step 1: \(String(describing: error))")
-                }
+                step2(during: execution)
             }
         }
         
-        func step2(during execution: Execution) throws {
-            try execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-                try step3(during: execution)
+        func step2(during execution: Execution)  {
+            execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                do {
+                    try step3(during: execution)
+                } catch {
+                    execution.log(.error, "catched the following error in in step 2: \(String(describing: error))")
+                }
             }
         }
         
         func step3(during execution: Execution) throws {
             try execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-                throw TestError("error in step 3!")
+                try step4(during: execution)
+            }
+        }
+        
+        func step4(during execution: Execution) throws {
+            try execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                throw TestError("error in step 4!")
             }
         }
         
@@ -80,7 +88,9 @@ import Foundation
             logger: logger,
             excutionInfoFormat: ExecutionInfoFormat(
                 addIndentation: true,
-                addStructuralID: true
+                addType: true,
+                addExecutionPath: true,
+                addStructuralID: true,
             )
         )
         
@@ -89,11 +99,13 @@ import Foundation
         step1(during: Execution(ExecutionEventProcessor: myExecutionEventProcessor))
         
         #expect(uuidReplacements.doReplacements(in: logger.messages.joined(separator: "\n")) == """
-            beginning step step1(during:)@PipelineTests <#1>
-                beginning step step2(during:)@PipelineTests <#2>
-                    beginning step step3(during:)@PipelineTests <#3>
-                catched the following error in in step 1: error in step 3! <>
-            ending step step1(during:)@PipelineTests <#1>
+            {progress} beginning step step1(during:)@PipelineTests <#1>
+                {progress} beginning step step2(during:)@PipelineTests [@@ step step1(during:)@PipelineTests -> ] <#2>
+                    {progress} beginning step step3(during:)@PipelineTests [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> ] <#3>
+                        {progress} beginning step step4(during:)@PipelineTests [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> step step3(during:)@PipelineTests -> ] <#4>
+                    {error} catched the following error in in step 2: error in step 4! [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests] <>
+                {progress} ending step step2(during:)@PipelineTests [@@ step step1(during:)@PipelineTests -> ] <#2>
+            {progress} ending step step1(during:)@PipelineTests <#1>
             """)
         
     }

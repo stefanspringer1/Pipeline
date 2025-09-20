@@ -538,6 +538,10 @@ func hello_external_step(
 }
 ```
 
+### Throwing errors
+
+If an error occurs during a step, it is naturally propagated until it is caught in the code. There is no special handling of thrown errors by the framework. So step where the error is not catched yet will not be ending (an according message is not being logged), but as soon as the error gets catched inside a step, the following events do have the correct level and execution path.
+
 ### Stopping the execution
 
 Usually the execution stops at a fatal or deadly error (you can change this behaviour by setting `stopAtFatalError: false` when initializing the `Execution`). That means that in such a case no new step is started.
