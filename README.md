@@ -3,7 +3,7 @@ This is a simple framework for constructing a pipeline to process a single work 
 
 ## Overview
 
-The idea behind this framework is that there should be no fixed declarative schema for composing the steps of a processing pipeline for a single work item, as any conceivable schema might not be flexible enough. Instead, the concept is simply “functions calling functions,” with specific functions acting as steps. This gives you everything you need to define, control, and log a processing pipeline with maximum flexibility and efficiency.
+The idea behind this framework is that there should be no fixed declarative schema for composing the steps of a processing pipeline for a single work item, as any conceivable schema might not be flexible enough. Instead, the concept is simply “functions calling functions,” with specific functions acting as steps. This gives you everything you need to define, control, and log a processing pipeline with maximum flexibility and efficiency. This also applies to data, which is simple given as arguments to your steps which also can have return values.
 
 The framework is designed to also handle steps defined in other packages. It can reduce errors that occur in called steps to a specific severity level, which is very useful e.g. if a fatal error in another package should be treated as just a normal error in your application.
 
@@ -15,9 +15,7 @@ This framework does not provide its own logging implementation. However, the log
 
 When only logging via the `Execution` instance, you can easily build a tree structure from the `ExecutionEvent` instances.
 
-Concerning metadata such as a “process ID”, the pipline steps should not need to know about it. The `ExecutionEventProcessor` should handle any metadata and add it to the actual log entries if required. This addition of metadata information to a final textual logging information is facilitated by the implementation of `ExecutionEvent`.[^1]
-
-[^1]: If you do need such metadata information in a step, you can always get a textual view on this metadata in the form `metadataInfo` or `metadataInfoForUserInteraction` via the `Execution` object which in turn gets it from the `ExecutionEventProcessor`.
+Concerning metadata such as a “process ID”, pipline steps in general and especially pipline steps from other packages should not need to know about it. The `ExecutionEventProcessor` should handle any metadata and add it to the actual log entries if required, the implementation of `ExecutionEvent` facilitates this. Any more precise data you need for your own steps is generally covered in additional arguments for your steps. (If the metadata information is actually needed during processing in a general form, especially by an external package, it can be requested via the `metadataInfo` or `metadataInfoForUserInteraction` property of the `Execution` which in turn gets the information from the `ExecutionEventProcessor`.)
 
 The implementation of `ExecutionEvent` contains methods that simplify the creation of an actual text log entry (cf. the implementation of `ExecutionEventProcessorForLogger` in the test cases).
 
@@ -71,7 +69,7 @@ public protocol ExecutionEventProcessor {
 }
 ```
 
-If the metadata information is actually needed during processing (in the general case, this should not be the case), it can be requested via the `metadataInfo` property of the `Execution` which in turn gets the information from the `ExecutionEventProcessor`. Note that in the general case the metadata should contain the information about the current work item, so not only a new `Execution` has to be created for each work item, but usually also a new `ExecutionEventProcessor` has to be created.
+Note that in the general case the metadata should contain the information about the current work item, so not only a new `Execution` has to be created for each work item, but usually also a new `ExecutionEventProcessor` has to be created.
 
 See the `ExecutionEventProcessorForLogger` example in the test cases.
 
