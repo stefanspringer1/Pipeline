@@ -20,7 +20,7 @@ import Foundation
         
         func step2(during execution: Execution) throws {
             try execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-                throw TestError("error!")
+                throw TestError("error in step 2!")
             }
         }
         
@@ -45,7 +45,7 @@ import Foundation
         #expect(uuidReplacements.doReplacements(in: logger.messages.joined(separator: "\n")) == """
             beginning step step1(during:)@PipelineTests <#1>
                 beginning step step2(during:)@PipelineTests <#2>
-            THROWN ERROR: error!
+            THROWN ERROR: error in step 2!
             """)
         
     }
@@ -57,7 +57,7 @@ import Foundation
                 do {
                     try step2(during: execution)
                 } catch {
-                    execution.log(.error, "catched thrown error: \(String(describing: error))")
+                    execution.log(.error, "catched the following error in in step 1: \(String(describing: error))")
                 }
             }
         }
@@ -70,7 +70,7 @@ import Foundation
         
         func step3(during execution: Execution) throws {
             try execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-                throw TestError("error!")
+                throw TestError("error in step 3!")
             }
         }
         
@@ -92,7 +92,7 @@ import Foundation
             beginning step step1(during:)@PipelineTests <#1>
                 beginning step step2(during:)@PipelineTests <#2>
                     beginning step step3(during:)@PipelineTests <#3>
-                catched thrown error: error! <>
+                catched the following error in in step 1: error in step 3! <>
             ending step step1(during:)@PipelineTests <#1>
             """)
         
