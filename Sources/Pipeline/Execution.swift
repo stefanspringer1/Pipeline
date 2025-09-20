@@ -109,15 +109,18 @@ public final class Execution {
         if let step {
             _effectuationStack.append(.step(step: step, description: description))
         }
-        let result = try work()
-        if step != nil {
-            _effectuationStack.removeLast()
+        
+        defer {
+            if step != nil {
+                _effectuationStack.removeLast()
+            }
+            forceValues.removeLast()
+            if appeaseType != nil {
+                appeaseTypes.removeLast()
+            }
         }
-        forceValues.removeLast()
-        if appeaseType != nil {
-            appeaseTypes.removeLast()
-        }
-        return result
+        
+        return try work()
     }
     
     /// Executes always.
@@ -134,7 +137,7 @@ public final class Execution {
         )
         _effectuationStack.append(.forcing)
         
-        func rewind() {
+        defer {
             _effectuationStack.removeLast()
             ExecutionEventProcessor.process(
                 ExecutionEvent(
@@ -147,15 +150,7 @@ public final class Execution {
             )
         }
         
-        let t: T?
-        do {
-            t = try execute(step: nil, description: nil, force: true, work: work)
-            rewind()
-        } catch {
-            rewind()
-            throw error
-        }
-        return t
+        return try execute(step: nil, description: nil, force: true, work: work)
     }
     
     /// After execution, disremember what has been executed.
@@ -173,7 +168,6 @@ public final class Execution {
     
     /// Something that does not run in the normal case but ca be activated. Should use module name as prefix.
     public func optional<T>(named partName: String, description: String? = nil, work: () throws -> T) rethrows -> T? {
-        let result: T?
         if activatedOptions?.contains(partName) != true || dispensedWith?.contains(partName) == true {
             ExecutionEventProcessor.process(
                 ExecutionEvent(
@@ -187,7 +181,7 @@ public final class Execution {
                     effectuationStack: effectuationStack
                 )
             )
-            result = nil
+            return nil
         } else {
             let structuralID = UUID()
             ExecutionEventProcessor.process(
@@ -203,27 +197,29 @@ public final class Execution {
                 )
             )
             _effectuationStack.append(.optionalPart(name: partName, description: description))
-            result = try execute(step: nil, description: nil, force: false, work: work)
-            _effectuationStack.removeLast()
-            ExecutionEventProcessor.process(
-                ExecutionEvent(
-                    type: .progress,
-                    level: level,
-                    structuralID: structuralID,
-                    event: .endingOptionalPart(
-                        name: partName,
-                        description: description
-                    ),
-                    effectuationStack: effectuationStack
+            
+            defer {
+                _effectuationStack.removeLast()
+                ExecutionEventProcessor.process(
+                    ExecutionEvent(
+                        type: .progress,
+                        level: level,
+                        structuralID: structuralID,
+                        event: .endingOptionalPart(
+                            name: partName,
+                            description: description
+                        ),
+                        effectuationStack: effectuationStack
+                    )
                 )
-            )
+            }
+    
+            return try execute(step: nil, description: nil, force: false, work: work)
         }
-        return result
     }
     
     /// Something that runs in the normal case but ca be dispensed with. Should use module name as prefix.
     public func dispensable<T>(named partName: String, description: String? = nil, work: () throws -> T) rethrows -> T? {
-        let result: T?
         if dispensedWith?.contains(partName) == true {
             ExecutionEventProcessor.process(
                 ExecutionEvent(
@@ -237,7 +233,7 @@ public final class Execution {
                     effectuationStack: effectuationStack
                 )
             )
-            result = nil
+            return nil
         } else {
             let structuralID = UUID()
             ExecutionEventProcessor.process(
@@ -253,22 +249,25 @@ public final class Execution {
                 )
             )
             _effectuationStack.append(.dispensablePart(name: partName, description: description))
-            result = try execute(step: nil, description: description, force: false, work: work)
-            _effectuationStack.removeLast()
-            ExecutionEventProcessor.process(
-                ExecutionEvent(
-                    type: .progress,
-                    level: level,
-                    structuralID: structuralID,
-                    event: .endingDispensablePart(
-                        name: partName,
-                        description: description
-                    ),
-                    effectuationStack: effectuationStack
+            
+            defer {
+                _effectuationStack.removeLast()
+                ExecutionEventProcessor.process(
+                    ExecutionEvent(
+                        type: .progress,
+                        level: level,
+                        structuralID: structuralID,
+                        event: .endingDispensablePart(
+                            name: partName,
+                            description: description
+                        ),
+                        effectuationStack: effectuationStack
+                    )
                 )
-            )
+            }
+            
+            return try execute(step: nil, description: description, force: false, work: work)
         }
-        return result
     }
     
     /// Make worse message type than `Error` to type `Error` in contained calls.
@@ -357,20 +356,23 @@ public final class Execution {
             )
         )
         _effectuationStack.append(.describedPart(description: description))
-        let result = try work()
-        _effectuationStack.removeLast()
-        ExecutionEventProcessor.process(
-            ExecutionEvent(
-                type: .progress,
-                level: level,
-                structuralID: structuralID,
-                event: .endingDescribedPart(
-                    description: description
-                ),
-                effectuationStack: effectuationStack
+        
+        defer {
+            _effectuationStack.removeLast()
+            ExecutionEventProcessor.process(
+                ExecutionEvent(
+                    type: .progress,
+                    level: level,
+                    structuralID: structuralID,
+                    event: .endingDescribedPart(
+                        description: description
+                    ),
+                    effectuationStack: effectuationStack
+                )
             )
-        )
-        return result
+        }
+        
+        return try work()
     }
     
     private func after(step: StepID, structuralID: UUID?, description: String?, forced: Bool, secondsElapsed: Double) {

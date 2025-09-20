@@ -146,3 +146,42 @@ func elapsedTime(of f: () async -> Void) async -> Double {
     let elapsedTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
     return Double(elapsedTime) / 1_000_000_000
 }
+
+public struct TestError: Error, CustomStringConvertible  {
+    public let description: String
+    
+    var localizedDescription: String { description }
+    
+    public init(_ description: String) {
+        self.description = description
+    }
+}
+
+struct UUIDReplacements {
+    var count = 0
+    var mapped = [String:String]()
+    
+    mutating func replacement(for token: String) -> String {
+        if let existing = mapped[token] {
+            return existing
+        } else {
+            count += 1
+            let replacement = "#\(count)"
+            mapped[token] = replacement
+            return replacement
+        }
+    }
+    
+    mutating func doReplacements(in text: String) -> String {
+        var parts = [Substring]()
+        var rest = Substring(text)
+        while let match = rest.firstMatch(of: /[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/) {
+            parts.append(rest[..<match.range.lowerBound])
+            parts.append(Substring(replacement(for: String(rest[match.range.lowerBound..<match.range.upperBound]))))
+            rest = rest[match.range.upperBound...]
+        }
+        parts.append(rest)
+        return parts.joined()
+    }
+            
+}

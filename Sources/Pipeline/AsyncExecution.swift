@@ -89,19 +89,23 @@ public final actor AsyncExecution {
         if let step {
             synchronousExecution._effectuationStack.append(.step(step: step, description: description))
         }
-        let result = try await work()
-        if step != nil {
-            synchronousExecution._effectuationStack.removeLast()
+        
+        defer {
+            if step != nil {
+                synchronousExecution._effectuationStack.removeLast()
+            }
+            synchronousExecution.forceValues.removeLast()
+            if appeaseType != nil {
+                synchronousExecution.appeaseTypes.removeLast()
+            }
         }
-        synchronousExecution.forceValues.removeLast()
-        if appeaseType != nil {
-            synchronousExecution.appeaseTypes.removeLast()
-        }
-        return result
+        
+        return try await work()
     }
     
     /// Executes always.
     public func force<T>(work: () async throws -> T) async rethrows -> T? {
+        
         let structuralID = UUID()
         synchronousExecution.ExecutionEventProcessor.process(
             ExecutionEvent(
@@ -114,7 +118,7 @@ public final actor AsyncExecution {
         )
         synchronousExecution._effectuationStack.append(.forcing)
         
-        func rewind() async {
+        defer {
             synchronousExecution._effectuationStack.removeLast()
             synchronousExecution.ExecutionEventProcessor.process(
                 ExecutionEvent(
@@ -127,15 +131,7 @@ public final actor AsyncExecution {
             )
         }
         
-        let t: T?
-        do {
-            t = try await execute(step: nil, description: nil, force: true, work: work)
-            await rewind()
-        } catch {
-            await rewind()
-            throw error
-        }
-        return t
+        return try await execute(step: nil, description: nil, force: true, work: work)
     }
     
     /// After execution, disremember what has been executed.
@@ -153,7 +149,6 @@ public final actor AsyncExecution {
     
     /// Something that does not run in the normal case but ca be activated. Should use module name as prefix.
     public func optional<T>(named partName: String, description: String? = nil, work: () async throws -> T) async rethrows -> T? {
-        let result: T?
         if synchronousExecution.activatedOptions?.contains(partName) != true || synchronousExecution.dispensedWith?.contains(partName) == true {
             synchronousExecution.ExecutionEventProcessor.process(
                 ExecutionEvent(
@@ -167,7 +162,7 @@ public final actor AsyncExecution {
                     effectuationStack: synchronousExecution.effectuationStack
                 )
             )
-            result = nil
+            return nil
         } else {
             let structuralID = UUID()
             synchronousExecution.ExecutionEventProcessor.process(
@@ -183,27 +178,29 @@ public final actor AsyncExecution {
                 )
             )
             synchronousExecution._effectuationStack.append(.optionalPart(name: partName, description: description))
-            result = try await execute(step: nil, description: nil, force: false, work: work)
-            synchronousExecution._effectuationStack.removeLast()
-            synchronousExecution.ExecutionEventProcessor.process(
-                ExecutionEvent(
-                    type: .progress,
-                    level: synchronousExecution.level,
-                    structuralID: structuralID,
-                    event: .endingOptionalPart(
-                        name: partName,
-                        description: description
-                    ),
-                    effectuationStack: synchronousExecution.effectuationStack
+            
+            defer {
+                synchronousExecution._effectuationStack.removeLast()
+                synchronousExecution.ExecutionEventProcessor.process(
+                    ExecutionEvent(
+                        type: .progress,
+                        level: synchronousExecution.level,
+                        structuralID: structuralID,
+                        event: .endingOptionalPart(
+                            name: partName,
+                            description: description
+                        ),
+                        effectuationStack: synchronousExecution.effectuationStack
+                    )
                 )
-            )
+            }
+            
+            return  try await execute(step: nil, description: nil, force: false, work: work)
         }
-        return result
     }
     
     /// Something that runs in the normal case but ca be dispensed with. Should use module name as prefix.
     public func dispensable<T>(named partName: String, description: String? = nil, work: () async throws -> T) async rethrows -> T? {
-        let result: T?
         if synchronousExecution.dispensedWith?.contains(partName) == true {
             synchronousExecution.ExecutionEventProcessor.process(
                 ExecutionEvent(
@@ -217,7 +214,7 @@ public final actor AsyncExecution {
                     effectuationStack: synchronousExecution.effectuationStack
                 )
             )
-            result = nil
+            return nil
         } else {
             let structuralID = UUID()
             synchronousExecution.ExecutionEventProcessor.process(
@@ -233,22 +230,25 @@ public final actor AsyncExecution {
                 )
             )
             synchronousExecution._effectuationStack.append(.dispensablePart(name: partName, description: description))
-            result = try await execute(step: nil, description: description, force: false, work: work)
-            synchronousExecution._effectuationStack.removeLast()
-            synchronousExecution.ExecutionEventProcessor.process(
-                ExecutionEvent(
-                    type: .progress,
-                    level: synchronousExecution.level,
-                    structuralID: structuralID,
-                    event: .endingDispensablePart(
-                        name: partName,
-                        description: description
-                    ),
-                    effectuationStack: synchronousExecution.effectuationStack
+            
+            defer {
+                synchronousExecution._effectuationStack.removeLast()
+                synchronousExecution.ExecutionEventProcessor.process(
+                    ExecutionEvent(
+                        type: .progress,
+                        level: synchronousExecution.level,
+                        structuralID: structuralID,
+                        event: .endingDispensablePart(
+                            name: partName,
+                            description: description
+                        ),
+                        effectuationStack: synchronousExecution.effectuationStack
+                    )
                 )
-            )
+            }
+            
+            return try await execute(step: nil, description: description, force: false, work: work)
         }
-        return result
     }
     
     /// Make worse message type than `Error` to type `Error` in contained calls.
@@ -337,20 +337,23 @@ public final actor AsyncExecution {
             )
         )
         synchronousExecution._effectuationStack.append(.describedPart(description: description))
-        let result = try await work()
-        synchronousExecution._effectuationStack.removeLast()
-        synchronousExecution.ExecutionEventProcessor.process(
-            ExecutionEvent(
-                type: .progress,
-                level: synchronousExecution.level,
-                structuralID: structuralID,
-                event: .endingDescribedPart(
-                    description: description
-                ),
-                effectuationStack: synchronousExecution.effectuationStack
+        
+        defer {
+            synchronousExecution._effectuationStack.removeLast()
+            synchronousExecution.ExecutionEventProcessor.process(
+                ExecutionEvent(
+                    type: .progress,
+                    level: synchronousExecution.level,
+                    structuralID: structuralID,
+                    event: .endingDescribedPart(
+                        description: description
+                    ),
+                    effectuationStack: synchronousExecution.effectuationStack
+                )
             )
-        )
-        return result
+        }
+        
+        return try await work()
     }
     
     private func after(step: StepID, structuralID: UUID?, description: String?, forced: Bool, secondsElapsed: Double) async {

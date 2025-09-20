@@ -238,35 +238,6 @@ import Localization
         
         step1(during: execution)
         
-        struct UUIDReplacements {
-            var count = 0
-            var mapped = [String:String]()
-            
-            mutating func replacement(for token: String) -> String {
-                if let existing = mapped[token] {
-                    return existing
-                } else {
-                    count += 1
-                    let replacement = "#\(count)"
-                    mapped[token] = replacement
-                    return replacement
-                }
-            }
-            
-            mutating func doReplacements(in text: String) -> String {
-                var parts = [Substring]()
-                var rest = Substring(text)
-                while let match = rest.firstMatch(of: /[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/) {
-                    parts.append(rest[..<match.range.lowerBound])
-                    parts.append(Substring(replacement(for: String(rest[match.range.lowerBound..<match.range.upperBound]))))
-                    rest = rest[match.range.upperBound...]
-                }
-                parts.append(rest)
-                return parts.joined()
-            }
-                    
-        }
-        
         var uuidReplacements = UUIDReplacements()
         
         #expect(uuidReplacements.doReplacements(in: logger.messages.joined(separator: "\n")) == """
