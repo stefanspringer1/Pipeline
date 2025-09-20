@@ -18,7 +18,7 @@ Concerning metadata such as a “process ID”, the pipline steps should not nee
 
 The implementation of `ExecutionInfo` contains methods that simplify the creation of an actual text log entry. Cf. the implementation of `ExecutionInfoConsumerForLogger` in the test cases, which are generally a good way to see the features of this framework in action.
 
-The framework can also handle asynchronous calls (see the section about working in asynchronous contexts).
+The framework can also handle the parallel processing of partial work items and handle asynchronous calls (see the section about working in asynchronous contexts).
 
 This documentation contains some motivation. For a quick start, there is a tutorial below. For more details, you might look at the conventions (between horizontal rules) given further below and look at some code samples from the contained tests.
 
