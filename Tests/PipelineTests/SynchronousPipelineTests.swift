@@ -72,9 +72,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
+            let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = Execution(ExecutionEventProcessor: myExecutionInfoProcessor)
+            let execution = Execution(ExecutionEventProcessor: myExecutionEventProcessor)
             
             step1(during: execution)
             
@@ -87,9 +87,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
+            let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = Execution(ExecutionEventProcessor: myExecutionInfoProcessor, withOptions: ["step2"])
+            let execution = Execution(ExecutionEventProcessor: myExecutionEventProcessor, withOptions: ["step2"])
             
             step1(during: execution)
             
@@ -126,9 +126,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
+            let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = Execution(ExecutionEventProcessor: myExecutionInfoProcessor, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
+            let execution = Execution(ExecutionEventProcessor: myExecutionEventProcessor, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
             
             step1(during: execution)
             
@@ -158,9 +158,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
+            let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = Execution(ExecutionEventProcessor: myExecutionInfoProcessor, withOptions: ["step2"])
+            let execution = Execution(ExecutionEventProcessor: myExecutionEventProcessor, withOptions: ["step2"])
             
             step1(during: execution, stopStep2a: true)
             

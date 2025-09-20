@@ -59,7 +59,7 @@ public class ConcurrentCollectingLogger: Logger {
     
 }
 
-public class ExecutionInfoProcessorForLogger: ExecutionEventProcessor {
+public class ExecutionEventProcessorForLogger: ExecutionEventProcessor {
     
     public let metadataInfo: String
     public let metadataInfoForUserInteraction: String

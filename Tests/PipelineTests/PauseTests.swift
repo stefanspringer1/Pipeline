@@ -66,10 +66,10 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
+            let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
             let time = elapsedTime {
-                step1(during: Execution(ExecutionEventProcessor: myExecutionInfoProcessor))
+                step1(during: Execution(ExecutionEventProcessor: myExecutionEventProcessor))
             }
             
             #expect(logger.messages.joined(separator: "\n") == expectedProcessing)
@@ -81,11 +81,11 @@ import Foundation
         
         DispatchQueue.global(qos: .userInitiated).async {
             let logger = CollectingLogger()
-            let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
+            let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
             let time = elapsedTime {
                 // the `waitNotPausedFunction` is given to the excution:
-                step1(during: Execution(ExecutionEventProcessor: myExecutionInfoProcessor, waitNotPausedFunction: waitNotPaused))
+                step1(during: Execution(ExecutionEventProcessor: myExecutionEventProcessor, waitNotPausedFunction: waitNotPaused))
             }
             
             #expect(logger.messages.joined(separator: "\n") == expectedProcessing)

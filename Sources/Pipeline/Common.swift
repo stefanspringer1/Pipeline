@@ -6,7 +6,7 @@ public protocol ExecutionEventProcessor {
     var metadataInfoForUserInteraction: String { get }
 }
 
-public protocol AsyncExecutionInfoProcessor {
+public protocol AsyncExecutionEventProcessor {
     func process(_ executionEvent: ExecutionEvent) async
     var metadataInfo: String { get }
     var metadataInfoForUserInteraction: String { get }

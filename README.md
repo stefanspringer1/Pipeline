@@ -20,7 +20,7 @@ Concerning metadata such as a “process ID”, the pipline steps should not nee
 
 [^1]: If you do need such metadata information in a step, you can always get a textual view on this metadata in the form `metadataInfo` or `metadataInfoForUserInteraction` via the `Execution` object which in turn gets it from the `ExecutionEventProcessor`.
 
-The implementation of `ExecutionEvent` contains methods that simplify the creation of an actual text log entry. Cf. the implementation of `ExecutionInfoProcessorForLogger` in the test cases, which are generally a good way to see the features of this framework in action.
+The implementation of `ExecutionEvent` contains methods that simplify the creation of an actual text log entry. Cf. the implementation of `ExecutionEventProcessorForLogger` in the test cases, which are generally a good way to see the features of this framework in action.
 
 The framework can also handle the parallel processing of partial work items and handle asynchronous calls (see the section about working in asynchronous contexts).
 
@@ -73,15 +73,15 @@ public protocol ExecutionEventProcessor {
 
 If the metadata information is actually needed during processing (in the general case, this should not be the case), it can be requested via the `metadataInfo` property of the `Execution` which in turn gets the information from the `ExecutionEventProcessor`. Note that in the general case the metadata should contain the information about the current work item, so not only a new `Execution` has to be created for each work item, but usually also a new `ExecutionEventProcessor` has to be created.
 
-See the `ExecutionInfoProcessorForLogger` example in the test cases.
+See the `ExecutionEventProcessorForLogger` example in the test cases.
 
 Then, for each work item that you want to process (whatever your work items might be, maybe you have only one work item so you do not need a for loop), use a new `Execution` object:
 
 ```Swift
 let logger = PrintingLogger()
-let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger)
+let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger)
 
-let execution = Execution(ExecutionEventProcessor: myExecutionInfoProcessor)
+let execution = Execution(ExecutionEventProcessor: myExecutionEventProcessor)
 ```
 
 The step you call (in the following example: `myWork_step`) might have any other arguments besides the `Execution` and some logger, and the postfix `_step` is only for convention. Your step might be implemented as follows:
@@ -482,8 +482,8 @@ The resolving of a job name and the call of the appropriate job is then done as 
     if let jobFunction = jobRegistry[job]?.job {
         
         let logger = PrintingLogger()
-        let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger)
-        let execution = Execution(ExecutionEventProcessor: myExecutionInfoProcessor)
+        let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger)
+        let execution = Execution(ExecutionEventProcessor: myExecutionEventProcessor)
         
         jobFunction(
             execution,
