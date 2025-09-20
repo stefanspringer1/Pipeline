@@ -14,6 +14,8 @@ To facilitate further description, we will already introduce some of the types u
 
 This framework does not provide its own logging implementation. However, the logging used by packages should be able to be formulated independently of the actual logging implementation. Log messages can therefore be generated via methods of the `Execution` instance and then must be processed by an `ExecutionEventProcessor` provided by you. The `ExecutionEventProcessor` must also handle information about the execution of the steps. This information is contained in the `ExecutionEvent` type, which the `ExecutionEventProcessor` must be able to process. More granular error types are available than in most actual logging implementations, which you must then map to the message types of the logging implementation used by your application.
 
+When only logging via the `Execution` instance, you can easily build a tree structure from the `ExecutionEvent` instances, see the section about the tree view on logging.
+
 Concerning metadata such as a “process ID”, the pipline steps should not need to know about it. The `ExecutionEventProcessor` should handle any metadata and add it to the actual log entries if required.
 
 The implementation of `ExecutionEvent` contains methods that simplify the creation of an actual text log entry. Cf. the implementation of `ExecutionInfoProcessorForLogger` in the test cases, which are generally a good way to see the features of this framework in action.
@@ -557,9 +559,11 @@ func bye_step(
 
 As mentioned above, you have to use `AsyncExecution`, and you can get call synchronous step with the `Execution` instance `execution.synchronous`.
 
-### The tree view on logging and structural IDs
+### The tree view on logging
 
 The `ExecutionEvent` instance can actually seen as part of a tree, e.g. the begin message of a step together with the end message for the same message can be seen as a node containing everything that is logged in-between. Your might want to actually build a tree from it, and the `level` contained in the `ExecutionEvent` is actually all you need for this, but all `ExecutionEvent` instances that do not act as a leave in this tree view have a UUID `structuralID` to help you with that.
+
+Note that when logging by directly using your logging implemention and not the `Execution` instance, you do not get an `ExecutionEvent` and there your log messages are not part of the sdescribed tructure.
 
 ### Parallel execution
 
