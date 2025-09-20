@@ -1,4 +1,3 @@
-# Pipeline
 
 This is a simple framework for constructing a pipeline to process a single work item.
 
@@ -14,7 +13,7 @@ To facilitate further description, we will already introduce some of the types u
 
 This framework does not provide its own logging implementation. However, the logging used by packages should be able to be formulated independently of the actual logging implementation. Log messages can therefore be generated via methods of the `Execution` instance and then must be processed by an `ExecutionEventProcessor` provided by you. The `ExecutionEventProcessor` must also handle information about the execution of the steps. Either is realized as an `ExecutionEvent`, containing all parts of the information as separate entities, which the `ExecutionEventProcessor` must be able to process. More granular error types are available than in most actual logging implementations, which you must then map to the message types of the logging implementation used by your application.
 
-When only logging via the `Execution` instance, you can easily build a tree structure from the `ExecutionEvent` instances, see the section about the tree view on logging.
+When only logging via the `Execution` instance, you can easily build a tree structure from the `ExecutionEvent` instances.
 
 Concerning metadata such as a “process ID”, the pipline steps should not need to know about it. The `ExecutionEventProcessor` should handle any metadata and add it to the actual log entries if required. This addition of metadata information to the final logging information is facilitated by the implementation of `ExecutionEvent`.[^1]
 
@@ -22,7 +21,7 @@ Concerning metadata such as a “process ID”, the pipline steps should not nee
 
 The implementation of `ExecutionEvent` contains methods that simplify the creation of an actual text log entry. Cf. the implementation of `ExecutionEventProcessorForLogger` in the test cases, which are generally a good way to see the features of this framework in action.
 
-The framework can also handle the parallel processing of partial work items and handle asynchronous calls (see the section about working in asynchronous contexts).
+The framework can also handle the parallel processing of partial work items and handle asynchronous calls.
 
 This documentation contains some motivation. For a quick start, there is a tutorial below. For more details, you might look at the conventions (between horizontal rules) given further below and look at some code samples from the contained tests.
 
