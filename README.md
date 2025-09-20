@@ -67,6 +67,7 @@ You need an instance conforming to `ExecutionEventProcessor`
 public protocol ExecutionEventProcessor {
     func process(_ executionEvent: ExecutionEvent)
     var metadataInfo: String { get }
+    var metadataInfoForUserInteraction: String { get }
 }
 ```
 
