@@ -52,9 +52,9 @@ import Foundation
         }
         
         let logger = CollectingLogger()
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true, addType: true))
+        let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true, addType: true))
         
-        let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer)
+        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor)
         
         step1(during: execution)
         
@@ -115,9 +115,9 @@ import Foundation
         }
         
         let logger = CollectingLogger()
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true, addType: true))
+        let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true, addType: true))
         
-        let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer)
+        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor)
         
         step1(during: execution)
         
@@ -178,9 +178,9 @@ import Foundation
         }
         
         let logger = CollectingLogger()
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true, addType: true))
+        let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true, addType: true))
         
-        let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer)
+        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor)
         
         step1(during: execution)
         

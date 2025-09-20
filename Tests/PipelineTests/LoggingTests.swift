@@ -39,9 +39,9 @@ import Localization
         }
         
         let logger = CollectingLogger()
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true, addType: true, addExecutionPath: true))
+        let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true, addType: true, addExecutionPath: true))
         
-        let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer)
+        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor)
         
         step1(during: execution)
         
@@ -65,9 +65,9 @@ import Localization
     @Test func testMessage1() throws {
         
         let logger = CollectingLogger()
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger)
+        let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger)
         
-        let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer)
+        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor)
         
         let message = Message(
             id: "values not OK",
@@ -89,10 +89,10 @@ import Localization
         let logger = CollectingLogger()
         
         // NOTE: `excutionInfoFormat: .bareIndented` added:
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
+        let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
         
         // NOTE: `language: .de` added:
-        let execution = Execution(language: .de, executionInfoConsumer: myExecutionInfoConsumer)
+        let execution = Execution(language: .de, ExecutionInfoProcessor: myExecutionInfoProcessor)
         
         let message = Message(
             id: "values not OK",
@@ -117,7 +117,7 @@ import Localization
         
         let logger = CollectingLogger()
         
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(
+        let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(
             withMetaDataInfo: metadata.description,
             logger: logger,
             withMinimalInfoType: .info,
@@ -125,7 +125,7 @@ import Localization
         )
         
         // NOTE: `language: .de` added:
-        let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer)
+        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor)
         
         execution.appease(to: .warning) {
             execution.log(.error, "this was an error")
@@ -153,7 +153,7 @@ import Localization
         
         let logger = CollectingLogger()
         
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(
+        let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(
             withMetaDataInfo: metadata.description,
             logger: logger,
             withMinimalInfoType: .info,
@@ -161,7 +161,7 @@ import Localization
         )
         
         // NOTE: `language: .de` added:
-        let execution = AsyncExecution(executionInfoConsumer: myExecutionInfoConsumer)
+        let execution = AsyncExecution(ExecutionInfoProcessor: myExecutionInfoProcessor)
         
         await execution.appease(to: .warning) {
             await execution.log(.error, "this was an error")

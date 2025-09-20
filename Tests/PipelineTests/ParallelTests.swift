@@ -26,8 +26,8 @@ import Foundation
         }
         
         let logger = ConcurrentCollectingLogger()
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger, withMinimalInfoType: .info, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
-        let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer)
+        let myExecutionInfoProcessor = ExecutionInfoProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, withMinimalInfoType: .info, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
+        let execution = Execution(ExecutionInfoProcessor: myExecutionInfoProcessor)
         
         let numbers = Array(1...20)
         let threads = 5

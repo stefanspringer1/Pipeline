@@ -59,7 +59,7 @@ public class ConcurrentCollectingLogger: Logger {
     
 }
 
-public class ExecutionInfoConsumerForLogger: ExecutionInfoConsumer {
+public class ExecutionInfoProcessorForLogger: ExecutionInfoProcessor {
     
     private let _metadataInfo: String
     public var metadataInfo: String { _metadataInfo }
@@ -80,7 +80,7 @@ public class ExecutionInfoConsumerForLogger: ExecutionInfoConsumer {
         self.excutionInfoFormat = excutionInfoFormat
     }
     
-    public func consume(_ executionInfo: ExecutionInfo) {
+    public func process(_ executionInfo: ExecutionInfo) {
         if let minimalInfoType, executionInfo.type < minimalInfoType {
             return
         }

@@ -1,12 +1,12 @@
 import Foundation
 
-public protocol ExecutionInfoConsumer {
-    func consume(_ executionInfo: ExecutionInfo)
+public protocol ExecutionInfoProcessor {
+    func process(_ executionInfo: ExecutionInfo)
     var metadataInfo: String { get }
 }
 
-public protocol AsyncExecutionInfoConsumer {
-    func consume(_ executionInfo: ExecutionInfo) async
+public protocol AsyncExecutionInfoProcessor {
+    func process(_ executionInfo: ExecutionInfo) async
     var metadataInfo: String { get }
 }
 

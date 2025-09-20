@@ -8,8 +8,8 @@ public final class Execution {
     
     let language: Language
     
-    var executionInfoConsumer: any ExecutionInfoConsumer
-    public var metadataInfo: String { executionInfoConsumer.metadataInfo }
+    var ExecutionInfoProcessor: any ExecutionInfoProcessor
+    public var metadataInfo: String { ExecutionInfoProcessor.metadataInfo }
     
     public let stopAtFatalError: Bool
     
@@ -37,7 +37,7 @@ public final class Execution {
     
     public var parallel: Execution {
         Execution(
-            executionInfoConsumer: executionInfoConsumer,
+            ExecutionInfoProcessor: ExecutionInfoProcessor,
             effectuationStack: _effectuationStack,
             waitNotPausedFunction: waitNotPausedFunction
         )
@@ -45,7 +45,7 @@ public final class Execution {
     
     public init(
         language: Language = .en,
-        executionInfoConsumer: any ExecutionInfoConsumer,
+        ExecutionInfoProcessor: any ExecutionInfoProcessor,
         stopAtFatalError: Bool = true,
         effectuationStack: [Effectuation] = [Effectuation](),
         withOptions activatedOptions: Set<String>? = nil,
@@ -54,7 +54,7 @@ public final class Execution {
         logFileInfo: URL? = nil
     ) {
         self.language = language
-        self.executionInfoConsumer = executionInfoConsumer
+        self.ExecutionInfoProcessor = ExecutionInfoProcessor
         self.stopAtFatalError = stopAtFatalError
         self._effectuationStack = effectuationStack
         self.activatedOptions = activatedOptions
@@ -69,7 +69,7 @@ public final class Execution {
     var _stopped = false
     
     public func stop(reason: String) {
-        executionInfoConsumer.consume(
+        ExecutionInfoProcessor.process(
             ExecutionInfo(
                 type: .progress,
                 level: level,
@@ -122,7 +122,7 @@ public final class Execution {
     /// Executes always.
     public func force<T>(work: () throws -> T) rethrows -> T? {
         let structuralID = UUID()
-        executionInfoConsumer.consume(
+        ExecutionInfoProcessor.process(
             ExecutionInfo(
                 type: .progress,
                 level: level,
@@ -135,7 +135,7 @@ public final class Execution {
         
         func rewind() {
             _effectuationStack.removeLast()
-            executionInfoConsumer.consume(
+            ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: level,
@@ -175,7 +175,7 @@ public final class Execution {
         let result: T?
         let structuralID = UUID()
         if activatedOptions?.contains(partName) != true || dispensedWith?.contains(partName) == true {
-            executionInfoConsumer.consume(
+            ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: level,
@@ -189,7 +189,7 @@ public final class Execution {
             )
             result = nil
         } else {
-            executionInfoConsumer.consume(
+            ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: level,
@@ -204,7 +204,7 @@ public final class Execution {
             _effectuationStack.append(.optionalPart(name: partName, description: description))
             result = try execute(step: nil, description: nil, force: false, work: work)
             _effectuationStack.removeLast()
-            executionInfoConsumer.consume(
+            ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: level,
@@ -225,7 +225,7 @@ public final class Execution {
         let result: T?
         let structuralID = UUID()
         if dispensedWith?.contains(partName) == true {
-            executionInfoConsumer.consume(
+            ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: level,
@@ -239,7 +239,7 @@ public final class Execution {
             )
             result = nil
         } else {
-            executionInfoConsumer.consume(
+            ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: level,
@@ -254,7 +254,7 @@ public final class Execution {
             _effectuationStack.append(.dispensablePart(name: partName, description: description))
             result = try execute(step: nil, description: description, force: false, work: work)
             _effectuationStack.removeLast()
-            executionInfoConsumer.consume(
+            ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: level,
@@ -278,7 +278,7 @@ public final class Execution {
     private func effectuateTest(forStep step: StepID, withDescription description: String?) -> (execute: Bool, forced: Bool, structuralID: UUID) {
         let structuralID = UUID()
         if _stopped {
-            executionInfoConsumer.consume(
+            ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: level,
@@ -292,7 +292,7 @@ public final class Execution {
             )
             return (execute: false, forced: false, structuralID: structuralID)
         } else if !executedSteps.contains(step) {
-            executionInfoConsumer.consume(
+            ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: level,
@@ -308,7 +308,7 @@ public final class Execution {
             executedSteps.insert(step)
             return (execute: true, forced: false, structuralID: structuralID)
         } else if forceValues.last == true {
-            executionInfoConsumer.consume(
+            ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: level,
@@ -324,7 +324,7 @@ public final class Execution {
             executedSteps.insert(step)
             return (execute: true, forced: true, structuralID: structuralID)
         } else {
-            executionInfoConsumer.consume(
+            ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: level,
@@ -343,7 +343,7 @@ public final class Execution {
     /// Logging some work (that is not a step) as progress.
     public func doing<T>(withID id: String? = nil, _ description: String, work: () throws -> T) rethrows -> T? {
         let structuralID = UUID()
-        executionInfoConsumer.consume(
+        ExecutionInfoProcessor.process(
             ExecutionInfo(
                 type: .progress,
                 level: level,
@@ -357,7 +357,7 @@ public final class Execution {
         _effectuationStack.append(.describedPart(description: description))
         let result = try work()
         _effectuationStack.removeLast()
-        executionInfoConsumer.consume(
+        ExecutionInfoProcessor.process(
             ExecutionInfo(
                 type: .progress,
                 level: level,
@@ -373,7 +373,7 @@ public final class Execution {
     
     private func after(step: StepID, structuralID: UUID, description: String?, forced: Bool, secondsElapsed: Double) {
         if _stopped {
-            executionInfoConsumer.consume(
+            ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: level,
@@ -386,7 +386,7 @@ public final class Execution {
                 )
             )
         } else {
-            executionInfoConsumer.consume(
+            ExecutionInfoProcessor.process(
                 ExecutionInfo(
                     type: .progress,
                     level: level,

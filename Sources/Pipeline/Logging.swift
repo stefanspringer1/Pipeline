@@ -50,7 +50,7 @@ extension Execution {
             actualType = type
             orginalType = nil
         }
-        executionInfoConsumer.consume(
+        ExecutionInfoProcessor.process(
             ExecutionInfo(
                 type: actualType,
                 originalType: orginalType,
@@ -92,7 +92,7 @@ extension AsyncExecution {
             actualType = type
             orginalType = nil
         }
-        synchronousExecution.executionInfoConsumer.consume(
+        synchronousExecution.ExecutionInfoProcessor.process(
             ExecutionInfo(
                 type: actualType,
                 originalType: orginalType,
