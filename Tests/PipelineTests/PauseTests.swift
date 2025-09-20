@@ -4,7 +4,7 @@ import Foundation
 
 @Suite(.serialized) struct PauseTests {
     
-    let metadata = MyMetaData1(
+    let metadata = MyMetaData(
         applicationName: "myapp",
         processID: "precess123",
         workItemInfo: "item123"
@@ -37,7 +37,7 @@ import Foundation
         let waitTimeBeforeContinuingProcessing = waitTimeBeforePausingProcessing + waitTimeStep1
         let waitTimeAfterContinuingProcessing = waitTimeStep1 / 2
         
-        func step1<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>) {
+        func step1(during execution: Execution) {
             execution.effectuate("doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 print("PROCESSING: starting step1")
                 print("PROCESSING: waiting \(waitTimeStep1) seconds in step1...")
@@ -49,7 +49,7 @@ import Foundation
             }
         }
         
-        func step2<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>) {
+        func step2(during execution: Execution) {
             execution.effectuate("doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 print("PROCESSING: in step2")
             }
@@ -66,10 +66,10 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
             let time = elapsedTime {
-                step1(during: Execution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer))
+                step1(during: Execution(executionInfoConsumer: myExecutionInfoConsumer))
             }
             
             #expect(logger.messages.joined(separator: "\n") == expectedProcessing)
@@ -81,11 +81,11 @@ import Foundation
         
         DispatchQueue.global(qos: .userInitiated).async {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
             let time = elapsedTime {
                 // the `waitNotPausedFunction` is given to the excution:
-                step1(during: Execution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, waitNotPausedFunction: waitNotPaused))
+                step1(during: Execution(executionInfoConsumer: myExecutionInfoConsumer, waitNotPausedFunction: waitNotPaused))
             }
             
             #expect(logger.messages.joined(separator: "\n") == expectedProcessing)

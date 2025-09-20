@@ -1,11 +1,13 @@
 import Foundation
 
-public protocol ExecutionMetaData: CustomStringConvertible, Sendable {}
+public protocol ExecutionInfoConsumer {
+    func consume(_ executionInfo: ExecutionInfo)
+    var metadataInfo: String { get }
+}
 
-public protocol ExecutionInfoConsumer<MetaData> {
-    associatedtype MetaData: CustomStringConvertible
-    func consume(_ executionInfo: ExecutionInfo<MetaData>)
-    var executionStopped: Bool { get }
+public protocol AsyncExecutionInfoConsumer {
+    func consume(_ executionInfo: ExecutionInfo) async
+    var metadataInfo: String { get }
 }
 
 public struct StepID: Hashable, CustomStringConvertible, Sendable {
@@ -73,33 +75,32 @@ extension Array where Element == Effectuation {
 
 public struct ExecutionInfoFormat {
     
-    let withTime: Bool
-    let withMetaData: Bool
-    let withIndentation: Bool
-    let withType: Bool
-    let withExecutionPath: Bool
+    public let withTime: Bool
+    public let addMetaDataInfo: Bool
+    public let addIndentation: Bool
+    public let addType: Bool
+    public let addExecutionPath: Bool
     
     public init(
         withTime: Bool = false,
-        withMetaData: Bool = false,
-        withIndentation: Bool = false,
-        withType: Bool = false,
-        withExecutionPath: Bool = false
+        addMetaDataInfo: Bool = false,
+        addIndentation: Bool = false,
+        addType: Bool = false,
+        addExecutionPath: Bool = false
     ) {
         self.withTime = withTime
-        self.withMetaData = withMetaData
-        self.withIndentation = withIndentation
-        self.withType = withType
-        self.withExecutionPath = withExecutionPath
+        self.addMetaDataInfo = addMetaDataInfo
+        self.addIndentation = addIndentation
+        self.addType = addType
+        self.addExecutionPath = addExecutionPath
     }
 }
 
-public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConvertible {
+public struct ExecutionInfo {
     
     public let type: InfoType
     public let originalType: InfoType? // non-appeased
     public let time: Date
-    public let metadata: MetaData
     public let level: Int
     public let structuralID: UUID
     public let event: ExecutionEvent
@@ -111,7 +112,6 @@ public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConv
         type: InfoType,
         originalType: InfoType? = nil,
         time: Date = Date.now,
-        metadata: MetaData,
         level: Int,
         structuralID: UUID,
         event: ExecutionEvent,
@@ -120,47 +120,49 @@ public struct ExecutionInfo<MetaData: CustomStringConvertible>: CustomStringConv
         self.type = type
         self.originalType = originalType
         self.time = time
-        self.metadata = metadata
         self.level = level
         self.structuralID = structuralID
         self.event = event
         self.effectuationStack = effectuationStack
     }
     
-    public var description: String {
+    public func description(withMetaDataInfo: String?) -> String {
         return description(
-            withTime: true,
-            withMetaData: true,
-            withIndentation: true,
-            withType: true,
-            withExecutionPath: true
+            addTime: true,
+            addMetaDataInfo: true,
+            addIndentation: true,
+            addType: true,
+            addExecutionPath: true,
+            withMetaDataInfo: withMetaDataInfo
         )
     }
     
     public func description(
-        withTime: Bool = false,
-        withMetaData: Bool = false,
-        withIndentation: Bool = false,
-        withType: Bool = false,
-        withExecutionPath: Bool
+        addTime: Bool = false,
+        addMetaDataInfo: Bool = false,
+        addIndentation: Bool = false,
+        addType: Bool = false,
+        addExecutionPath: Bool,
+        withMetaDataInfo: String? = nil
     ) -> String {
         [
-            withTime ? "\(time.description):" : nil,
-            withMetaData ? "\(metadata):" : nil,
-            withIndentation && level > 0 ? "\(String(repeating: " ", count: level * 4 - 1))" : nil,
-            withType ? "{\(type)}" : nil,
+            addTime ? "\(time.description):" : nil,
+            addMetaDataInfo && withMetaDataInfo != nil ? "\(withMetaDataInfo!.description):" : nil,
+            addIndentation && level > 0 ? "\(String(repeating: " ", count: level * 4 - 1))" : nil,
+            addType ? "{\(type)}" : nil,
             event.description,
-            withExecutionPath && !effectuationStack.isEmpty ? "[@@ \(isMessage() ? effectuationStack.executionPath : effectuationStack.executionPathForEffectuation)]" : nil
+            addExecutionPath && !effectuationStack.isEmpty ? "[@@ \(isMessage() ? effectuationStack.executionPath : effectuationStack.executionPathForEffectuation)]" : nil
         ].compactMap({ $0 }).joined(separator: " ")
     }
     
-    public func description(format executionInfoFormat: ExecutionInfoFormat) -> String {
+    public func description(format executionInfoFormat: ExecutionInfoFormat, withMetaDataInfo: String?) -> String {
         description(
-            withTime: executionInfoFormat.withTime,
-            withMetaData: executionInfoFormat.withMetaData,
-            withIndentation: executionInfoFormat.withIndentation,
-            withType: executionInfoFormat.withType,
-            withExecutionPath: executionInfoFormat.withExecutionPath
+            addTime: executionInfoFormat.withTime,
+            addMetaDataInfo: executionInfoFormat.addMetaDataInfo,
+            addIndentation: executionInfoFormat.addIndentation,
+            addType: executionInfoFormat.addType,
+            addExecutionPath: executionInfoFormat.addExecutionPath,
+            withMetaDataInfo: withMetaDataInfo
         )
     }
     

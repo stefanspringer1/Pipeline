@@ -4,7 +4,7 @@ import Foundation
 
 @Suite(.serialized) struct ParallelTests {
     
-    let metadata = MyMetaData1(
+    let metadata = MyMetaData(
         applicationName: "myapp",
         processID: "precess123",
         workItemInfo: "item123"
@@ -12,22 +12,22 @@ import Foundation
     
     @Test func parallelTest1() async throws {
         
-        func step1<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>, number: Int) {
+        func step1(during execution: Execution, number: Int) {
             execution.effectuate("#\(number): doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 let message = "#\(String(format: "%02d", number)): in step1"; print(message); execution.log(.info, message)
                 step2(during: execution, number: number)
             }
         }
         
-        func step2<MetaData: ExecutionMetaData>(during execution: Execution<MetaData>, number: Int) {
+        func step2(during execution: Execution, number: Int) {
             execution.effectuate("#\(number): doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 let message = "#\(String(format: "%02d", number)): in step2"; print(message); execution.log(.info, message)
             }
         }
         
         let logger = ConcurrentCollectingLogger()
-        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, withMinimalInfoType: .info, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
-        let execution = Execution(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
+        let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger, withMinimalInfoType: .info, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
+        let execution = Execution(executionInfoConsumer: myExecutionInfoConsumer)
         
         let numbers = Array(1...20)
         let threads = 5

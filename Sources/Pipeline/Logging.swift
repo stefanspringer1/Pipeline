@@ -54,7 +54,6 @@ extension Execution {
             ExecutionInfo(
                 type: actualType,
                 originalType: orginalType,
-                metadata: metadata,
                 level: level,
                 structuralID: UUID(),
                 event: .message(
@@ -63,6 +62,9 @@ extension Execution {
                 effectuationStack: effectuationStack
             )
         )
+        if type >= .fatal, stopAtFatalError {
+            stop(reason: "\(type) error occurred")
+        }
     }
     
     public func log(_ type: InfoType, _ message: MultiLanguageText) {
@@ -94,7 +96,6 @@ extension AsyncExecution {
             ExecutionInfo(
                 type: actualType,
                 originalType: orginalType,
-                metadata: synchronousExecution.metadata,
                 level: synchronousExecution.level,
                 structuralID: UUID(),
                 event: .message(
@@ -103,6 +104,9 @@ extension AsyncExecution {
                 effectuationStack: synchronousExecution.effectuationStack
             )
         )
+        if type >= .fatal, synchronousExecution.stopAtFatalError {
+            synchronousExecution.stop(reason: "\(type) error occurred")
+        }
     }
     
     public func log(_ type: InfoType, _ message: MultiLanguageText) async {

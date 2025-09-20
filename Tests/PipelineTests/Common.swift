@@ -6,27 +6,27 @@ protocol Logger {
 }
 
 // from README:
-class PrintingLogger: Logger {
+public class PrintingLogger: Logger {
     
-    func log(_ message: String) {
+    public func log(_ message: String) {
         print(message)
     }
     
 }
 
-class CollectingLogger: Logger {
+public class CollectingLogger: Logger {
     
     private var _messages = [String]()
     
     var messages: [String] { _messages }
     
-    func log(_ message: String) {
+    public func log(_ message: String) {
         _messages.append(message)
     }
     
 }
 
-class ConcurrentCollectingLogger: Logger {
+public class ConcurrentCollectingLogger: Logger {
     
     private var _messages = [String]()
     let messagesSemaphore = DispatchSemaphore(value: 1)
@@ -59,37 +59,41 @@ class ConcurrentCollectingLogger: Logger {
     
 }
 
-class ExecutionInfoConsumerForLogger<MetaData: CustomStringConvertible>: ExecutionInfoConsumer {
+public class ExecutionInfoConsumerForLogger: ExecutionInfoConsumer {
     
-    var logger: Logger
-    let minimalInfoType: InfoType?
-    var excutionInfoFormat: ExecutionInfoFormat?
-    private var _executionStopped = false
-    var executionStopped: Bool { _executionStopped }
+    private let _metadataInfo: String
+    public var metadataInfo: String { _metadataInfo }
     
-    init(logger: Logger, withMinimalInfoType minimalInfoType: InfoType? = nil, excutionInfoFormat: ExecutionInfoFormat? = nil) {
+    private var logger: Logger
+    private let minimalInfoType: InfoType?
+    private var excutionInfoFormat: ExecutionInfoFormat?
+    
+    init(
+        withMetaDataInfo metadataInfo: String,
+        logger: Logger,
+        withMinimalInfoType minimalInfoType: InfoType? = nil,
+        excutionInfoFormat: ExecutionInfoFormat? = nil
+    ) {
+        self._metadataInfo = metadataInfo
         self.logger = logger
         self.minimalInfoType = minimalInfoType
         self.excutionInfoFormat = excutionInfoFormat
     }
     
-    func consume(_ executionInfo: ExecutionInfo<MetaData>) {
-        if executionInfo.type >= .fatal {
-            _executionStopped = true
-        }
+    public func consume(_ executionInfo: ExecutionInfo) {
         if let minimalInfoType, executionInfo.type < minimalInfoType {
             return
         }
         if let excutionInfoFormat {
-            logger.log(executionInfo.description(format: excutionInfoFormat))
+            logger.log(executionInfo.description(format: excutionInfoFormat, withMetaDataInfo: _metadataInfo))
         } else {
-            logger.log(executionInfo.description)
+            logger.log(executionInfo.description(withMetaDataInfo: _metadataInfo))
         }
     }
     
 }
 
-struct MyMetaData1: ExecutionMetaData {
+struct MyMetaData: CustomStringConvertible {
     
     let applicationName: String
     let processID: String
@@ -97,17 +101,6 @@ struct MyMetaData1: ExecutionMetaData {
     
     var description: String {
         "\(applicationName): \(processID)/\(workItemInfo)"
-    }
-}
-
-struct MyMetaData2: ExecutionMetaData {
-    
-    let server: String
-    let processID: String
-    let path: String
-    
-    var description: String {
-        "\(server): \(processID)/\(path)"
     }
 }
 

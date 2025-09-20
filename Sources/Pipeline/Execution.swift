@@ -4,13 +4,14 @@ import Localization
 /// Manages the execution of steps. In particular
 /// - prevents double execution of steps
 /// - keeps global information for logging
-public final class Execution<MetaData: ExecutionMetaData> {
+public final class Execution {
     
     let language: Language
     
-    let metadata: MetaData
+    var executionInfoConsumer: any ExecutionInfoConsumer
+    public var metadataInfo: String { executionInfoConsumer.metadataInfo }
     
-    var executionInfoConsumer: any ExecutionInfoConsumer<MetaData>
+    public let stopAtFatalError: Bool
     
     let dispensedWith: Set<String>?
     let activatedOptions: Set<String>?
@@ -34,9 +35,8 @@ public final class Execution<MetaData: ExecutionMetaData> {
         return self
     }
     
-    public var parallel: Execution<MetaData> {
-        Execution<MetaData>(
-            metadata: metadata,
+    public var parallel: Execution {
+        Execution(
             executionInfoConsumer: executionInfoConsumer,
             effectuationStack: _effectuationStack,
             waitNotPausedFunction: waitNotPausedFunction
@@ -45,10 +45,8 @@ public final class Execution<MetaData: ExecutionMetaData> {
     
     public init(
         language: Language = .en,
-        metadata: MetaData,
-        executionInfoConsumer: any ExecutionInfoConsumer<MetaData>,
-        showSteps: Bool = false,
-        debug: Bool = false,
+        executionInfoConsumer: any ExecutionInfoConsumer,
+        stopAtFatalError: Bool = true,
         effectuationStack: [Effectuation] = [Effectuation](),
         withOptions activatedOptions: Set<String>? = nil,
         dispensingWith dispensedWith: Set<String>? = nil,
@@ -56,9 +54,9 @@ public final class Execution<MetaData: ExecutionMetaData> {
         logFileInfo: URL? = nil
     ) {
         self.language = language
-        self.metadata = metadata
-        self._effectuationStack = effectuationStack
         self.executionInfoConsumer = executionInfoConsumer
+        self.stopAtFatalError = stopAtFatalError
+        self._effectuationStack = effectuationStack
         self.activatedOptions = activatedOptions
         self.dispensedWith = dispensedWith
         self.waitNotPausedFunction = waitNotPausedFunction
@@ -74,7 +72,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
         executionInfoConsumer.consume(
             ExecutionInfo(
                 type: .progress,
-                metadata: metadata,
                 level: level,
                 structuralID: UUID(),
                 event: .stoppingExecution(
@@ -128,7 +125,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
         executionInfoConsumer.consume(
             ExecutionInfo(
                 type: .progress,
-                metadata: metadata,
                 level: level,
                 structuralID: structuralID,
                 event: .beginningForcingSteps,
@@ -142,7 +138,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: metadata,
                     level: level,
                     structuralID: structuralID,
                     event: .endingForcingSteps,
@@ -183,7 +178,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: metadata,
                     level: level,
                     structuralID: structuralID,
                     event: .skippingOptionalPart(
@@ -198,7 +192,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: metadata,
                     level: level,
                     structuralID: structuralID,
                     event: .beginningOptionalPart(
@@ -214,7 +207,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: metadata,
                     level: level,
                     structuralID: structuralID,
                     event: .endingOptionalPart(
@@ -236,7 +228,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: metadata,
                     level: level,
                     structuralID: structuralID,
                     event: .skippingDispensablePart(
@@ -251,7 +242,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: metadata,
                     level: level,
                     structuralID: structuralID,
                     event: .beginningDispensablePart(
@@ -267,7 +257,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: metadata,
                     level: level,
                     structuralID: structuralID,
                     event: .endingDispensablePart(
@@ -288,11 +277,10 @@ public final class Execution<MetaData: ExecutionMetaData> {
     
     private func effectuateTest(forStep step: StepID, withDescription description: String?) -> (execute: Bool, forced: Bool, structuralID: UUID) {
         let structuralID = UUID()
-        if _stopped || executionInfoConsumer.executionStopped {
+        if _stopped {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: metadata,
                     level: level,
                     structuralID: structuralID,
                     event: .skippingStepInStoppedExecution(
@@ -307,7 +295,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: metadata,
                     level: level,
                     structuralID: structuralID,
                         event: .beginningStep(
@@ -324,7 +311,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: metadata,
                     level: level,
                     structuralID: structuralID,
                     event: .beginningStep(
@@ -341,7 +327,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: metadata,
                     level: level,
                     structuralID: structuralID,
                     event: .skippingPreviouslyExecutedStep(
@@ -361,7 +346,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
         executionInfoConsumer.consume(
             ExecutionInfo(
                 type: .progress,
-                metadata: metadata,
                 level: level,
                 structuralID: structuralID,
                 event: .beginningDescribedPart(
@@ -376,7 +360,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
         executionInfoConsumer.consume(
             ExecutionInfo(
                 type: .progress,
-                metadata: metadata,
                 level: level,
                 structuralID: structuralID,
                 event: .endingDescribedPart(
@@ -393,7 +376,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: metadata,
                     level: level,
                     structuralID: structuralID,
                     event: .stoppedStep(
@@ -407,7 +389,6 @@ public final class Execution<MetaData: ExecutionMetaData> {
             executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: metadata,
                     level: level,
                     structuralID: structuralID,
                     event: .endingStep(

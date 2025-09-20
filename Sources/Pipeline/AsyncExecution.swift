@@ -4,11 +4,13 @@ import Localization
 /// Manages the execution of steps. In particular
 /// - prevents double execution of steps
 /// - keeps global information for logging
-public final actor AsyncExecution<MetaData: ExecutionMetaData> {
+public final actor AsyncExecution {
     
-    let synchronousExecution: Execution<MetaData>
+    let synchronousExecution: Execution
     
-    public var synchronous: Execution<MetaData> {
+    public var metadataInfo: String { synchronousExecution.executionInfoConsumer.metadataInfo }
+    
+    public var synchronous: Execution {
         get async { synchronousExecution }
     }
     
@@ -21,9 +23,8 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
         return self
     }
     
-    public var parallel: AsyncExecution<MetaData> {
+    public var parallel: AsyncExecution {
         AsyncExecution(
-            metadata: synchronousExecution.metadata,
             executionInfoConsumer: synchronousExecution.executionInfoConsumer,
             effectuationStack: synchronousExecution._effectuationStack,
             waitNotPausedFunction: synchronousExecution.waitNotPausedFunction
@@ -32,23 +33,19 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
     
     public init(
         language: Language = .en,
-        metadata: MetaData,
         processID: String? = nil,
-        executionInfoConsumer: any ExecutionInfoConsumer<MetaData>,
-        showSteps: Bool = false,
-        debug: Bool = false,
+        executionInfoConsumer: any ExecutionInfoConsumer,
+        stopAtFatalError: Bool = true,
         effectuationStack: [Effectuation] = [Effectuation](),
         withOptions activatedOptions: Set<String>? = nil,
         dispensingWith dispensedWith: Set<String>? = nil,
         waitNotPausedFunction: (() -> ())? = nil,
         logFileInfo: URL? = nil
     ) {
-        self.synchronousExecution = Execution<MetaData>(
+        self.synchronousExecution = Execution(
             language: language,
-            metadata: metadata,
             executionInfoConsumer: executionInfoConsumer,
-            showSteps: showSteps,
-            debug: debug,
+            stopAtFatalError: stopAtFatalError,
             effectuationStack: effectuationStack,
             withOptions: activatedOptions,
             dispensingWith: dispensedWith,
@@ -108,7 +105,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
         synchronousExecution.executionInfoConsumer.consume(
             ExecutionInfo(
                 type: .progress,
-                metadata: synchronousExecution.metadata,
                 level: synchronousExecution.level,
                 structuralID: structuralID,
                 event: .beginningForcingSteps,
@@ -122,7 +118,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
                     event: .endingForcingSteps,
@@ -163,7 +158,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
                     event: .skippingOptionalPart(
@@ -178,7 +172,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
                     event: .beginningOptionalPart(
@@ -194,7 +187,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
                     event: .endingOptionalPart(
@@ -216,7 +208,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
                     event: .skippingDispensablePart(
@@ -231,7 +222,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
                     event: .beginningDispensablePart(
@@ -247,7 +237,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
                     event: .endingDispensablePart(
@@ -268,11 +257,10 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
     
     private func effectuateTest(forStep step: StepID, withDescription description: String?) async -> (execute: Bool, forced: Bool, structuralID: UUID) {
         let structuralID = UUID()
-        if synchronousExecution._stopped || synchronousExecution.executionInfoConsumer.executionStopped {
+        if synchronousExecution._stopped {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
                     event: .skippingStepInStoppedExecution(
@@ -287,7 +275,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
                         event: .beginningStep(
@@ -304,7 +291,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
                     event: .beginningStep(
@@ -321,7 +307,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
                     event: .skippingPreviouslyExecutedStep(
@@ -341,7 +326,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
         synchronousExecution.executionInfoConsumer.consume(
             ExecutionInfo(
                 type: .progress,
-                metadata: synchronousExecution.metadata,
                 level: synchronousExecution.level,
                 structuralID: structuralID,
                 event: .beginningDescribedPart(
@@ -356,7 +340,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
         synchronousExecution.executionInfoConsumer.consume(
             ExecutionInfo(
                 type: .progress,
-                metadata: synchronousExecution.metadata,
                 level: synchronousExecution.level,
                 structuralID: structuralID,
                 event: .endingDescribedPart(
@@ -373,7 +356,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
                     event: .stoppedStep(
@@ -387,7 +369,6 @@ public final actor AsyncExecution<MetaData: ExecutionMetaData> {
             synchronousExecution.executionInfoConsumer.consume(
                 ExecutionInfo(
                     type: .progress,
-                    metadata: synchronousExecution.metadata,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
                     event: .endingStep(

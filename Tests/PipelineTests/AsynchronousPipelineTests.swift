@@ -4,7 +4,7 @@ import Foundation
 
 @Suite(.serialized) struct AsynchronousPipelineTests {
     
-    let metadata = MyMetaData1(
+    let metadata = MyMetaData(
         applicationName: "myapp",
         processID: "precess123",
         workItemInfo: "item123"
@@ -15,7 +15,7 @@ import Foundation
      */
     @Test func testExecution() async throws {
             
-        func step1<MetaData: ExecutionMetaData>(during execution: AsyncExecution<MetaData>, stopStep2a: Bool = false) async {
+        func step1(during execution: AsyncExecution, stopStep2a: Bool = false) async {
             #expect(await execution.level == 0)
             await execution.effectuate("doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 #expect(await execution.level == 1)
@@ -30,7 +30,7 @@ import Foundation
             }
         }
         
-        func step2a<MetaData: ExecutionMetaData>(during execution: AsyncExecution<MetaData>, stop: Bool = false) async {
+        func step2a(during execution: AsyncExecution, stop: Bool = false) async {
             #expect(await execution.level == 2)
             await execution.effectuate("doing something in step2a", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 #expect(await execution.level == 3)
@@ -45,7 +45,7 @@ import Foundation
             }
         }
         
-        func step2b<MetaData: ExecutionMetaData>(during execution: AsyncExecution<MetaData>) async {
+        func step2b(during execution: AsyncExecution) async {
             await execution.effectuate("doing something in step2b", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 await execution.dispensable(named: "calling step3a in step2b", description: "we might want to skip step3a in step2b") {
                     #expect(await execution.executionPath == """
@@ -59,18 +59,18 @@ import Foundation
             }
         }
         
-        func step3a<MetaData: ExecutionMetaData>(during execution: AsyncExecution<MetaData>) async {
+        func step3a(during execution: AsyncExecution) async {
             await execution.effectuate("doing something in step3a", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 await step4(during: execution)
             }
         }
         
-        func step3b<MetaData: ExecutionMetaData>(during execution: AsyncExecution<MetaData>) async {
+        func step3b(during execution: AsyncExecution) async {
             await execution.effectuate("doing something in step3b", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
             }
         }
         
-        func step4<MetaData: ExecutionMetaData>(during execution: AsyncExecution<MetaData>) async {
+        func step4(during execution: AsyncExecution) async {
             await execution.effectuate("doing something in step4", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 await execution.log(.info, "we are in step 4")
             }
@@ -78,9 +78,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = AsyncExecution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer)
+            let execution = AsyncExecution(executionInfoConsumer: myExecutionInfoConsumer)
             
             await step1(during: execution)
             
@@ -93,9 +93,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = AsyncExecution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
+            let execution = AsyncExecution(executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
             
             await step1(during: execution)
             
@@ -132,9 +132,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = AsyncExecution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
+            let execution = AsyncExecution(executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
             
             await step1(during: execution)
             
@@ -164,9 +164,9 @@ import Foundation
         
         do {
             let logger = CollectingLogger()
-            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger<MyMetaData1>(logger: logger, excutionInfoFormat: ExecutionInfoFormat(withIndentation: true))
+            let myExecutionInfoConsumer = ExecutionInfoConsumerForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = AsyncExecution<MyMetaData1>(metadata: metadata, executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
+            let execution = AsyncExecution(executionInfoConsumer: myExecutionInfoConsumer, withOptions: ["step2"])
             
             await step1(during: execution, stopStep2a: true)
             
