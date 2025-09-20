@@ -108,10 +108,10 @@ public struct ExecutionEvent {
     public let time: Date
     public let level: Int
     public let structuralID: UUID? // not for leaves
-    public let event: ExecutionCoreEvent
+    public let coreEvent: ExecutionCoreEvent
     public let effectuationStack: [Effectuation]
     
-    public func isMessage() -> Bool { if case .message = event { true } else { false } }
+    public func isMessage() -> Bool { if case .message = coreEvent { true } else { false } }
     
     internal init(
         type: InfoType,
@@ -119,7 +119,7 @@ public struct ExecutionEvent {
         time: Date = Date.now,
         level: Int,
         structuralID: UUID?,
-        event: ExecutionCoreEvent,
+        coreEvent: ExecutionCoreEvent,
         effectuationStack: [Effectuation]
     ) {
         self.type = type
@@ -127,7 +127,7 @@ public struct ExecutionEvent {
         self.time = time
         self.level = level
         self.structuralID = structuralID
-        self.event = event
+        self.coreEvent = coreEvent
         self.effectuationStack = effectuationStack
     }
     
@@ -157,7 +157,7 @@ public struct ExecutionEvent {
             addMetaDataInfo && withMetaDataInfo != nil ? "\(withMetaDataInfo!.description):" : nil,
             addIndentation && level > 0 ? "\(String(repeating: " ", count: level * 4 - 1))" : nil,
             addType ? "{\(type)}" : nil,
-            event.description,
+            coreEvent.description,
             addExecutionPath && !effectuationStack.isEmpty ? "[@@ \(isMessage() ? effectuationStack.executionPath : effectuationStack.executionPathForEffectuation)]" : nil,
             addStructuralID ? "<\(structuralID?.description ?? "")>" : nil
         ].compactMap({ $0 }).joined(separator: " ")

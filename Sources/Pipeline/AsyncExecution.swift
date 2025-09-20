@@ -112,7 +112,7 @@ public final actor AsyncExecution {
                 type: .progress,
                 level: synchronousExecution.level,
                 structuralID: structuralID,
-                event: .beginningForcingSteps,
+                coreEvent: .beginningForcingSteps,
                 effectuationStack: synchronousExecution.effectuationStack
             )
         )
@@ -125,7 +125,7 @@ public final actor AsyncExecution {
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
-                    event: .endingForcingSteps,
+                    coreEvent: .endingForcingSteps,
                     effectuationStack: synchronousExecution.effectuationStack
                 )
             )
@@ -155,7 +155,7 @@ public final actor AsyncExecution {
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: nil, // is a leave, no structural ID necessary
-                    event: .skippingOptionalPart(
+                    coreEvent: .skippingOptionalPart(
                         name: partName,
                         description: description
                     ),
@@ -170,7 +170,7 @@ public final actor AsyncExecution {
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
-                    event: .beginningOptionalPart(
+                    coreEvent: .beginningOptionalPart(
                         name: partName,
                         description: description
                     ),
@@ -186,7 +186,7 @@ public final actor AsyncExecution {
                         type: .progress,
                         level: synchronousExecution.level,
                         structuralID: structuralID,
-                        event: .endingOptionalPart(
+                        coreEvent: .endingOptionalPart(
                             name: partName,
                             description: description
                         ),
@@ -207,7 +207,7 @@ public final actor AsyncExecution {
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: nil, // is a leave, no structural ID necessary
-                    event: .skippingDispensablePart(
+                    coreEvent: .skippingDispensablePart(
                         name: partName,
                         description: description
                     ),
@@ -222,7 +222,7 @@ public final actor AsyncExecution {
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
-                    event: .beginningDispensablePart(
+                    coreEvent: .beginningDispensablePart(
                         name: partName,
                         description: description
                     ),
@@ -238,7 +238,7 @@ public final actor AsyncExecution {
                         type: .progress,
                         level: synchronousExecution.level,
                         structuralID: structuralID,
-                        event: .endingDispensablePart(
+                        coreEvent: .endingDispensablePart(
                             name: partName,
                             description: description
                         ),
@@ -263,7 +263,7 @@ public final actor AsyncExecution {
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: nil, // is a leave, no structural ID necessary
-                    event: .skippingStepInStoppedExecution(
+                    coreEvent: .skippingStepInStoppedExecution(
                         id: step,
                         description: description
                     ),
@@ -278,7 +278,7 @@ public final actor AsyncExecution {
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
-                        event: .beginningStep(
+                        coreEvent: .beginningStep(
                         id: step,
                         description: description,
                         forced: false
@@ -295,7 +295,7 @@ public final actor AsyncExecution {
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
-                    event: .beginningStep(
+                    coreEvent: .beginningStep(
                         id: step,
                         description: description,
                         forced: true
@@ -311,7 +311,7 @@ public final actor AsyncExecution {
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: nil, // is a leave, no structural ID necessary
-                    event: .skippingPreviouslyExecutedStep(
+                    coreEvent: .skippingPreviouslyExecutedStep(
                         id: step,
                         description: description
                     ),
@@ -330,7 +330,7 @@ public final actor AsyncExecution {
                 type: .progress,
                 level: synchronousExecution.level,
                 structuralID: structuralID,
-                event: .beginningDescribedPart(
+                coreEvent: .beginningDescribedPart(
                     description: description
                 ),
                 effectuationStack: synchronousExecution.effectuationStack
@@ -345,7 +345,7 @@ public final actor AsyncExecution {
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
-                    event: .endingDescribedPart(
+                    coreEvent: .endingDescribedPart(
                         description: description
                     ),
                     effectuationStack: synchronousExecution.effectuationStack
@@ -363,7 +363,7 @@ public final actor AsyncExecution {
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
-                    event: .stoppedStep(
+                    coreEvent: .stoppedStep(
                         id: step,
                         description: description
                     ),
@@ -376,7 +376,7 @@ public final actor AsyncExecution {
                     type: .progress,
                     level: synchronousExecution.level,
                     structuralID: structuralID,
-                    event: .endingStep(
+                    coreEvent: .endingStep(
                         id: step,
                         description: description,
                         forced: forced

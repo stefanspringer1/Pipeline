@@ -56,7 +56,7 @@ extension Execution {
                 originalType: orginalType,
                 level: level,
                 structuralID: nil, // is a leave, no structural ID necessary
-                event: .message(
+                coreEvent: .message(
                     message: message
                 ),
                 effectuationStack: effectuationStack
@@ -98,7 +98,7 @@ extension AsyncExecution {
                 originalType: orginalType,
                 level: synchronousExecution.level,
                 structuralID: nil, // is a leave, no structural ID necessary
-                event: .message(
+                coreEvent: .message(
                     message: message
                 ),
                 effectuationStack: synchronousExecution.effectuationStack
