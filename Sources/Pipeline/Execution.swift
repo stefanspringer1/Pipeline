@@ -8,9 +8,9 @@ public final class Execution {
     
     let language: Language
     
-    var ExecutionEventProcessor: any ExecutionEventProcessor
-    public var metadataInfo: String { ExecutionEventProcessor.metadataInfo }
-    public var metadataInfoForUserInteraction: String { ExecutionEventProcessor.metadataInfoForUserInteraction }
+    var executionEventProcessor: any ExecutionEventProcessor
+    public var metadataInfo: String { executionEventProcessor.metadataInfo }
+    public var metadataInfoForUserInteraction: String { executionEventProcessor.metadataInfoForUserInteraction }
     
     public let stopAtFatalError: Bool
     
@@ -38,7 +38,7 @@ public final class Execution {
     
     public var parallel: Execution {
         Execution(
-            ExecutionEventProcessor: ExecutionEventProcessor,
+            ExecutionEventProcessor: executionEventProcessor,
             effectuationStack: _effectuationStack,
             waitNotPausedFunction: waitNotPausedFunction
         )
@@ -55,7 +55,7 @@ public final class Execution {
         logFileInfo: URL? = nil
     ) {
         self.language = language
-        self.ExecutionEventProcessor = ExecutionEventProcessor
+        self.executionEventProcessor = ExecutionEventProcessor
         self.stopAtFatalError = stopAtFatalError
         self._effectuationStack = effectuationStack
         self.activatedOptions = activatedOptions
@@ -70,7 +70,7 @@ public final class Execution {
     var _stopped = false
     
     public func stop(reason: String) {
-        ExecutionEventProcessor.process(
+        executionEventProcessor.process(
             ExecutionEvent(
                 type: .progress,
                 level: level,
@@ -126,7 +126,7 @@ public final class Execution {
     /// Executes always.
     public func force<T>(work: () throws -> T) rethrows -> T? {
         let structuralID = UUID()
-        ExecutionEventProcessor.process(
+        executionEventProcessor.process(
             ExecutionEvent(
                 type: .progress,
                 level: level,
@@ -139,7 +139,7 @@ public final class Execution {
         
         defer {
             _effectuationStack.removeLast()
-            ExecutionEventProcessor.process(
+            executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: level,
@@ -169,7 +169,7 @@ public final class Execution {
     /// Something that does not run in the normal case but ca be activated. Should use module name as prefix.
     public func optional<T>(named partName: String, description: String? = nil, work: () throws -> T) rethrows -> T? {
         if activatedOptions?.contains(partName) != true || dispensedWith?.contains(partName) == true {
-            ExecutionEventProcessor.process(
+            executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: level,
@@ -184,7 +184,7 @@ public final class Execution {
             return nil
         } else {
             let structuralID = UUID()
-            ExecutionEventProcessor.process(
+            executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: level,
@@ -200,7 +200,7 @@ public final class Execution {
             
             defer {
                 _effectuationStack.removeLast()
-                ExecutionEventProcessor.process(
+                executionEventProcessor.process(
                     ExecutionEvent(
                         type: .progress,
                         level: level,
@@ -221,7 +221,7 @@ public final class Execution {
     /// Something that runs in the normal case but ca be dispensed with. Should use module name as prefix.
     public func dispensable<T>(named partName: String, description: String? = nil, work: () throws -> T) rethrows -> T? {
         if dispensedWith?.contains(partName) == true {
-            ExecutionEventProcessor.process(
+            executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: level,
@@ -236,7 +236,7 @@ public final class Execution {
             return nil
         } else {
             let structuralID = UUID()
-            ExecutionEventProcessor.process(
+            executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: level,
@@ -252,7 +252,7 @@ public final class Execution {
             
             defer {
                 _effectuationStack.removeLast()
-                ExecutionEventProcessor.process(
+                executionEventProcessor.process(
                     ExecutionEvent(
                         type: .progress,
                         level: level,
@@ -277,7 +277,7 @@ public final class Execution {
     
     private func effectuateTest(forStep step: StepID, withDescription description: String?) -> (execute: Bool, forced: Bool, structuralID: UUID?) {
         if _stopped {
-            ExecutionEventProcessor.process(
+            executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: level,
@@ -292,7 +292,7 @@ public final class Execution {
             return (execute: false, forced: false, structuralID: nil)
         } else if !executedSteps.contains(step) {
             let structuralID = UUID()
-            ExecutionEventProcessor.process(
+            executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: level,
@@ -309,7 +309,7 @@ public final class Execution {
             return (execute: true, forced: false, structuralID: structuralID)
         } else if forceValues.last == true {
             let structuralID = UUID()
-            ExecutionEventProcessor.process(
+            executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: level,
@@ -325,7 +325,7 @@ public final class Execution {
             executedSteps.insert(step)
             return (execute: true, forced: true, structuralID: structuralID)
         } else {
-            ExecutionEventProcessor.process(
+            executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: level,
@@ -344,7 +344,7 @@ public final class Execution {
     /// Logging some work (that is not a step) as progress.
     public func doing<T>(withID id: String? = nil, _ description: String, work: () throws -> T) rethrows -> T? {
         let structuralID = UUID()
-        ExecutionEventProcessor.process(
+        executionEventProcessor.process(
             ExecutionEvent(
                 type: .progress,
                 level: level,
@@ -359,7 +359,7 @@ public final class Execution {
         
         defer {
             _effectuationStack.removeLast()
-            ExecutionEventProcessor.process(
+            executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: level,
@@ -377,7 +377,7 @@ public final class Execution {
     
     private func after(step: StepID, structuralID: UUID?, description: String?, forced: Bool, secondsElapsed: Double) {
         if _stopped {
-            ExecutionEventProcessor.process(
+            executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: level,
@@ -390,7 +390,7 @@ public final class Execution {
                 )
             )
         } else {
-            ExecutionEventProcessor.process(
+            executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: level,

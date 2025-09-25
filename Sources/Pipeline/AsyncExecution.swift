@@ -26,7 +26,7 @@ public final actor AsyncExecution {
     
     public var parallel: AsyncExecution {
         AsyncExecution(
-            ExecutionEventProcessor: synchronousExecution.ExecutionEventProcessor,
+            ExecutionEventProcessor: synchronousExecution.executionEventProcessor,
             effectuationStack: synchronousExecution._effectuationStack,
             waitNotPausedFunction: synchronousExecution.waitNotPausedFunction
         )
@@ -107,7 +107,7 @@ public final actor AsyncExecution {
     public func force<T>(work: () async throws -> T) async rethrows -> T? {
         
         let structuralID = UUID()
-        synchronousExecution.ExecutionEventProcessor.process(
+        synchronousExecution.executionEventProcessor.process(
             ExecutionEvent(
                 type: .progress,
                 level: synchronousExecution.level,
@@ -120,7 +120,7 @@ public final actor AsyncExecution {
         
         defer {
             synchronousExecution._effectuationStack.removeLast()
-            synchronousExecution.ExecutionEventProcessor.process(
+            synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
@@ -150,7 +150,7 @@ public final actor AsyncExecution {
     /// Something that does not run in the normal case but ca be activated. Should use module name as prefix.
     public func optional<T>(named partName: String, description: String? = nil, work: () async throws -> T) async rethrows -> T? {
         if synchronousExecution.activatedOptions?.contains(partName) != true || synchronousExecution.dispensedWith?.contains(partName) == true {
-            synchronousExecution.ExecutionEventProcessor.process(
+            synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
@@ -165,7 +165,7 @@ public final actor AsyncExecution {
             return nil
         } else {
             let structuralID = UUID()
-            synchronousExecution.ExecutionEventProcessor.process(
+            synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
@@ -181,7 +181,7 @@ public final actor AsyncExecution {
             
             defer {
                 synchronousExecution._effectuationStack.removeLast()
-                synchronousExecution.ExecutionEventProcessor.process(
+                synchronousExecution.executionEventProcessor.process(
                     ExecutionEvent(
                         type: .progress,
                         level: synchronousExecution.level,
@@ -202,7 +202,7 @@ public final actor AsyncExecution {
     /// Something that runs in the normal case but ca be dispensed with. Should use module name as prefix.
     public func dispensable<T>(named partName: String, description: String? = nil, work: () async throws -> T) async rethrows -> T? {
         if synchronousExecution.dispensedWith?.contains(partName) == true {
-            synchronousExecution.ExecutionEventProcessor.process(
+            synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
@@ -217,7 +217,7 @@ public final actor AsyncExecution {
             return nil
         } else {
             let structuralID = UUID()
-            synchronousExecution.ExecutionEventProcessor.process(
+            synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
@@ -233,7 +233,7 @@ public final actor AsyncExecution {
             
             defer {
                 synchronousExecution._effectuationStack.removeLast()
-                synchronousExecution.ExecutionEventProcessor.process(
+                synchronousExecution.executionEventProcessor.process(
                     ExecutionEvent(
                         type: .progress,
                         level: synchronousExecution.level,
@@ -258,7 +258,7 @@ public final actor AsyncExecution {
     
     private func effectuateTest(forStep step: StepID, withDescription description: String?) async -> (execute: Bool, forced: Bool, structuralID: UUID?) {
         if synchronousExecution._stopped {
-            synchronousExecution.ExecutionEventProcessor.process(
+            synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
@@ -273,7 +273,7 @@ public final actor AsyncExecution {
             return (execute: false, forced: false, structuralID: nil)
         } else if !synchronousExecution.executedSteps.contains(step) {
             let structuralID = UUID()
-            synchronousExecution.ExecutionEventProcessor.process(
+            synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
@@ -290,7 +290,7 @@ public final actor AsyncExecution {
             return (execute: true, forced: false, structuralID: structuralID)
         } else if synchronousExecution.forceValues.last == true {
             let structuralID = UUID()
-            synchronousExecution.ExecutionEventProcessor.process(
+            synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
@@ -306,7 +306,7 @@ public final actor AsyncExecution {
             synchronousExecution.executedSteps.insert(step)
             return (execute: true, forced: true, structuralID: structuralID)
         } else {
-            synchronousExecution.ExecutionEventProcessor.process(
+            synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
@@ -325,7 +325,7 @@ public final actor AsyncExecution {
     /// Logging some work (that is not a step) as progress.
     public func doing<T>(withID id: String? = nil, _ description: String, work: () async throws -> T) async rethrows -> T? {
         let structuralID = UUID()
-        synchronousExecution.ExecutionEventProcessor.process(
+        synchronousExecution.executionEventProcessor.process(
             ExecutionEvent(
                 type: .progress,
                 level: synchronousExecution.level,
@@ -340,7 +340,7 @@ public final actor AsyncExecution {
         
         defer {
             synchronousExecution._effectuationStack.removeLast()
-            synchronousExecution.ExecutionEventProcessor.process(
+            synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
@@ -358,7 +358,7 @@ public final actor AsyncExecution {
     
     private func after(step: StepID, structuralID: UUID?, description: String?, forced: Bool, secondsElapsed: Double) async {
         if synchronousExecution._stopped {
-            synchronousExecution.ExecutionEventProcessor.process(
+            synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
@@ -371,7 +371,7 @@ public final actor AsyncExecution {
                 )
             )
         } else {
-            synchronousExecution.ExecutionEventProcessor.process(
+            synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
                     level: synchronousExecution.level,
