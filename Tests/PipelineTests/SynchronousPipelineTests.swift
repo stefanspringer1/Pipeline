@@ -74,7 +74,7 @@ import Foundation
             let logger = CollectingLogger()
             let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = Execution(ExecutionEventProcessor: myExecutionEventProcessor)
+            let execution = Execution(executionEventProcessor: myExecutionEventProcessor)
             
             step1(during: execution)
             
@@ -89,7 +89,7 @@ import Foundation
             let logger = CollectingLogger()
             let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = Execution(ExecutionEventProcessor: myExecutionEventProcessor, withOptions: ["step2"])
+            let execution = Execution(executionEventProcessor: myExecutionEventProcessor, withOptions: ["step2"])
             
             step1(during: execution)
             
@@ -128,7 +128,7 @@ import Foundation
             let logger = CollectingLogger()
             let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = Execution(ExecutionEventProcessor: myExecutionEventProcessor, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
+            let execution = Execution(executionEventProcessor: myExecutionEventProcessor, withOptions: ["step2"], dispensingWith: ["calling step3a in step2b"])
             
             step1(during: execution)
             
@@ -160,7 +160,7 @@ import Foundation
             let logger = CollectingLogger()
             let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
-            let execution = Execution(ExecutionEventProcessor: myExecutionEventProcessor, withOptions: ["step2"])
+            let execution = Execution(executionEventProcessor: myExecutionEventProcessor, withOptions: ["step2"])
             
             step1(during: execution, stopStep2a: true)
             

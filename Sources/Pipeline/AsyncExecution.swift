@@ -26,7 +26,7 @@ public final actor AsyncExecution {
     
     public var parallel: AsyncExecution {
         AsyncExecution(
-            ExecutionEventProcessor: synchronousExecution.executionEventProcessor,
+            executionEventProcessor: synchronousExecution.executionEventProcessor,
             effectuationStack: synchronousExecution._effectuationStack,
             waitNotPausedFunction: synchronousExecution.waitNotPausedFunction
         )
@@ -35,7 +35,7 @@ public final actor AsyncExecution {
     public init(
         language: Language = .en,
         processID: String? = nil,
-        ExecutionEventProcessor: any ExecutionEventProcessor,
+        executionEventProcessor: any ExecutionEventProcessor,
         stopAtFatalError: Bool = true,
         effectuationStack: [Effectuation] = [Effectuation](),
         withOptions activatedOptions: Set<String>? = nil,
@@ -45,7 +45,7 @@ public final actor AsyncExecution {
     ) {
         self.synchronousExecution = Execution(
             language: language,
-            ExecutionEventProcessor: ExecutionEventProcessor,
+            executionEventProcessor: executionEventProcessor,
             stopAtFatalError: stopAtFatalError,
             effectuationStack: effectuationStack,
             withOptions: activatedOptions,

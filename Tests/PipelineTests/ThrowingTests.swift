@@ -39,7 +39,7 @@ import Foundation
         var uuidReplacements = UUIDReplacements()
         
         do {
-            try step1(during: Execution(ExecutionEventProcessor: myExecutionEventProcessor))
+            try step1(during: Execution(executionEventProcessor: myExecutionEventProcessor))
         } catch {
             logger.log("THROWN ERROR: \(String(describing: error))")
         }
@@ -96,7 +96,7 @@ import Foundation
         
         var uuidReplacements = UUIDReplacements()
         
-        step1(during: Execution(ExecutionEventProcessor: myExecutionEventProcessor))
+        step1(during: Execution(executionEventProcessor: myExecutionEventProcessor))
         
         #expect(uuidReplacements.doReplacements(in: logger.messages.joined(separator: "\n")) == """
             {progress} beginning step step1(during:)@PipelineTests <#1>

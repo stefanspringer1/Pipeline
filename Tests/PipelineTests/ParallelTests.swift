@@ -27,7 +27,7 @@ import Foundation
         
         let logger = ConcurrentCollectingLogger()
         let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, withMinimalInfoType: .info, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
-        let execution = Execution(ExecutionEventProcessor: myExecutionEventProcessor)
+        let execution = Execution(executionEventProcessor: myExecutionEventProcessor)
         
         let numbers = Array(1...20)
         let threads = 5

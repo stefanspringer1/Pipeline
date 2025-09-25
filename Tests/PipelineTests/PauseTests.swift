@@ -69,7 +69,7 @@ import Foundation
             let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
             let time = elapsedTime {
-                step1(during: Execution(ExecutionEventProcessor: myExecutionEventProcessor))
+                step1(during: Execution(executionEventProcessor: myExecutionEventProcessor))
             }
             
             #expect(logger.messages.joined(separator: "\n") == expectedProcessing)
@@ -85,7 +85,7 @@ import Foundation
             
             let time = elapsedTime {
                 // the `waitNotPausedFunction` is given to the excution:
-                step1(during: Execution(ExecutionEventProcessor: myExecutionEventProcessor, waitNotPausedFunction: waitNotPaused))
+                step1(during: Execution(executionEventProcessor: myExecutionEventProcessor, waitNotPausedFunction: waitNotPaused))
             }
             
             #expect(logger.messages.joined(separator: "\n") == expectedProcessing)

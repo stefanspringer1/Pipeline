@@ -38,7 +38,7 @@ public final class Execution {
     
     public var parallel: Execution {
         Execution(
-            ExecutionEventProcessor: executionEventProcessor,
+            executionEventProcessor: executionEventProcessor,
             effectuationStack: _effectuationStack,
             waitNotPausedFunction: waitNotPausedFunction
         )
@@ -46,7 +46,7 @@ public final class Execution {
     
     public init(
         language: Language = .en,
-        ExecutionEventProcessor: any ExecutionEventProcessor,
+        executionEventProcessor: any ExecutionEventProcessor,
         stopAtFatalError: Bool = true,
         effectuationStack: [Effectuation] = [Effectuation](),
         withOptions activatedOptions: Set<String>? = nil,
@@ -55,7 +55,7 @@ public final class Execution {
         logFileInfo: URL? = nil
     ) {
         self.language = language
-        self.executionEventProcessor = ExecutionEventProcessor
+        self.executionEventProcessor = executionEventProcessor
         self.stopAtFatalError = stopAtFatalError
         self._effectuationStack = effectuationStack
         self.activatedOptions = activatedOptions

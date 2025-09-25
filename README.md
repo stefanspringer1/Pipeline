@@ -77,7 +77,7 @@ Then, for each work item that you want to process (whatever your work items migh
 let logger = PrintingLogger()
 let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger)
 
-let execution = Execution(ExecutionEventProcessor: myExecutionEventProcessor)
+let execution = Execution(executionEventProcessor: myExecutionEventProcessor)
 ```
 
 The step you call (in the following example: `myWork_step`) might have any other arguments besides the `Execution` and some logger, and the postfix `_step` is only for convention. Your step might be implemented as follows:
@@ -479,7 +479,7 @@ The resolving of a job name and the call of the appropriate job is then done as 
         
         let logger = PrintingLogger()
         let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger)
-        let execution = Execution(ExecutionEventProcessor: myExecutionEventProcessor)
+        let execution = Execution(executionEventProcessor: myExecutionEventProcessor)
         
         jobFunction(
             execution,
