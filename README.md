@@ -569,6 +569,8 @@ Note that when logging by directly using your logging implemention and not the `
 
 ### Parallel execution
 
+To execute steps in paralell, 
+
 Use `execution.parallel` to create a copy of an `execution` to use in a parallelization. Of course, you then need a logger that can handle conccurent logging.
 
 See the example `parallelTest1()` in the tests.

@@ -1,20 +1,49 @@
 import Foundation
 import Localization
 
+public struct ExecutionState: Sendable {
+    let language: Language
+    let executionEventProcessor: any ExecutionEventProcessor
+    let stopAtFatalError: Bool
+    let activatedOptions: Set<String>?
+    let dispenseWith: Set<String>?
+    var executedSteps = Set<StepID>()
+    let effectuationStack: [Effectuation]
+    let waitNotPausedFunction: (@Sendable () -> ())?
+    let forceValues: [Bool]
+    let appeaseTypes: [InfoType]
+    let stopped: Bool
+}
+
 /// Manages the execution of steps. In particular
 /// - prevents double execution of steps
 /// - keeps global information for logging
 public final class Execution {
     
+    public var state: ExecutionState {
+        ExecutionState(
+            language: language,
+            executionEventProcessor: executionEventProcessor,
+            stopAtFatalError: stopAtFatalError,
+            activatedOptions: activatedOptions,
+            dispenseWith: dispenseWith,
+            effectuationStack: effectuationStack,
+            waitNotPausedFunction: waitNotPausedFunction,
+            forceValues: forceValues,
+            appeaseTypes: appeaseTypes,
+            stopped: stopped
+        )
+    }
+    
     let language: Language
     
-    var executionEventProcessor: any ExecutionEventProcessor
+    let executionEventProcessor: any ExecutionEventProcessor
     public var metadataInfo: String { executionEventProcessor.metadataInfo }
     public var metadataInfoForUserInteraction: String { executionEventProcessor.metadataInfoForUserInteraction }
     
     public let stopAtFatalError: Bool
     
-    let dispensedWith: Set<String>?
+    let dispenseWith: Set<String>?
     let activatedOptions: Set<String>?
     
     var executedSteps = Set<StepID>()
@@ -25,10 +54,10 @@ public final class Execution {
         _effectuationStack
     }
     
-    public var waitNotPausedFunction: (() -> ())?
+    public var waitNotPausedFunction: (@Sendable () -> ())?
     
     public func setting(
-        waitNotPausedFunction: (() -> ())? = nil
+        waitNotPausedFunction: (@Sendable () -> ())? = nil
     ) -> Self {
         if let waitNotPausedFunction {
             self.waitNotPausedFunction = waitNotPausedFunction
@@ -37,11 +66,18 @@ public final class Execution {
     }
     
     public var parallel: Execution {
-        Execution(
+        let execution = Execution(
+            language: language,
             executionEventProcessor: executionEventProcessor,
-            effectuationStack: _effectuationStack,
-            waitNotPausedFunction: waitNotPausedFunction
+            stopAtFatalError: stopAtFatalError,
+            effectuationStack: effectuationStack,
+            withOptions: activatedOptions,
+            dispensingWith: dispenseWith,
+            waitNotPausedFunction: waitNotPausedFunction,
         )
+        execution.executedSteps = executedSteps
+        execution._stopped = _stopped
+        return execution
     }
     
     public init(
@@ -51,16 +87,28 @@ public final class Execution {
         effectuationStack: [Effectuation] = [Effectuation](),
         withOptions activatedOptions: Set<String>? = nil,
         dispensingWith dispensedWith: Set<String>? = nil,
-        waitNotPausedFunction: (() -> ())? = nil,
-        logFileInfo: URL? = nil
+        waitNotPausedFunction: (@Sendable () -> ())? = nil,
     ) {
         self.language = language
         self.executionEventProcessor = executionEventProcessor
         self.stopAtFatalError = stopAtFatalError
         self._effectuationStack = effectuationStack
         self.activatedOptions = activatedOptions
-        self.dispensedWith = dispensedWith
+        self.dispenseWith = dispensedWith
         self.waitNotPausedFunction = waitNotPausedFunction
+    }
+    
+    public init(withExecutionState executionState: ExecutionState) {
+        self.language = executionState.language
+        self.executionEventProcessor = executionState.executionEventProcessor
+        self.stopAtFatalError = executionState.stopAtFatalError
+        self.activatedOptions = executionState.activatedOptions
+        self.dispenseWith = executionState.dispenseWith
+        self._effectuationStack = executionState.effectuationStack
+        self.waitNotPausedFunction = executionState.waitNotPausedFunction
+        self.forceValues = executionState.forceValues
+        self.appeaseTypes = executionState.appeaseTypes
+        self._stopped = executionState.stopped
     }
     
     public var level: Int { _effectuationStack.count }
@@ -68,6 +116,8 @@ public final class Execution {
     public var executionPath: String { _effectuationStack.executionPath }
     
     var _stopped = false
+    
+    public var stopped: Bool { _stopped }
     
     public func stop(reason: String) {
         executionEventProcessor.process(
@@ -83,8 +133,6 @@ public final class Execution {
         )
         _stopped = true
     }
-    
-    public var stopped: Bool { _stopped }
     
     var forceValues = [Bool]()
     var appeaseTypes = [InfoType]()
@@ -168,7 +216,7 @@ public final class Execution {
     
     /// Something that does not run in the normal case but ca be activated. Should use module name as prefix.
     public func optional<T>(named partName: String, description: String? = nil, work: () throws -> T) rethrows -> T? {
-        if activatedOptions?.contains(partName) != true || dispensedWith?.contains(partName) == true {
+        if activatedOptions?.contains(partName) != true || dispenseWith?.contains(partName) == true {
             executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
@@ -220,7 +268,7 @@ public final class Execution {
     
     /// Something that runs in the normal case but ca be dispensed with. Should use module name as prefix.
     public func dispensable<T>(named partName: String, description: String? = nil, work: () throws -> T) rethrows -> T? {
-        if dispensedWith?.contains(partName) == true {
+        if dispenseWith?.contains(partName) == true {
             executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,

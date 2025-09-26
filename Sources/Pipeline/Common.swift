@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol ExecutionEventProcessor {
+public protocol ExecutionEventProcessor: Sendable {
     func process(_ executionEvent: ExecutionEvent)
     var metadataInfo: String { get }
     var metadataInfoForUserInteraction: String { get }
@@ -75,7 +75,7 @@ extension Array where Element == Effectuation {
     
 }
 
-public struct ExecutionInfoFormat {
+public struct ExecutionInfoFormat: Sendable {
     
     public let withTime: Bool
     public let addMetaDataInfo: Bool

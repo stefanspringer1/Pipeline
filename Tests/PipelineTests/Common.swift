@@ -1,12 +1,12 @@
 import Foundation
 import Pipeline
 
-protocol Logger {
+protocol Logger: Sendable {
     func log(_ message: String)
 }
 
 // from README:
-public class PrintingLogger: Logger {
+public class PrintingLogger: @unchecked Sendable, Logger {
     
     public func log(_ message: String) {
         print(message)
@@ -14,19 +14,7 @@ public class PrintingLogger: Logger {
     
 }
 
-public class CollectingLogger: Logger {
-    
-    private var _messages = [String]()
-    
-    var messages: [String] { _messages }
-    
-    public func log(_ message: String) {
-        _messages.append(message)
-    }
-    
-}
-
-public class ConcurrentCollectingLogger: Logger {
+public final class CollectingLogger: @unchecked Sendable, Logger {
     
     private var _messages = [String]()
     let messagesSemaphore = DispatchSemaphore(value: 1)
@@ -40,7 +28,7 @@ public class ConcurrentCollectingLogger: Logger {
     }
     
     internal let group = DispatchGroup()
-    internal let queue = DispatchQueue(label: "ConcurrentCollectingLogger", qos: .background)
+    internal let queue = DispatchQueue(label: "CollectingLogger", qos: .background)
     
     public func log(_ message: String) {
         group.enter()
@@ -59,14 +47,14 @@ public class ConcurrentCollectingLogger: Logger {
     
 }
 
-public class ExecutionEventProcessorForLogger: ExecutionEventProcessor {
+public final class ExecutionEventProcessorForLogger: ExecutionEventProcessor {
     
     public let metadataInfo: String
     public let metadataInfoForUserInteraction: String
     
-    private var logger: Logger
+    private let logger: Logger
     private let minimalInfoType: InfoType?
-    private var excutionInfoFormat: ExecutionInfoFormat?
+    private let excutionInfoFormat: ExecutionInfoFormat?
     
     init(
         withMetaDataInfo metadataInfo: String,
@@ -107,7 +95,7 @@ struct MyMetaData: CustomStringConvertible {
 }
 
 /// Process the items in `batch` in parallel by the function `worker` using `threads` number of threads.
-public func executeInParallel<Seq: Sequence>(batch: Seq, threads: Int, worker: @escaping (Seq.Element) -> ()) {
+public func executeInParallel<T: Sendable>(batch: any Sequence<T>, threads: Int, worker: @escaping @Sendable (T) -> ()) {
     let queue = DispatchQueue(label: "executeInParallel", attributes: .concurrent)
     let group = DispatchGroup()
     let semaphore = DispatchSemaphore(value: threads)
@@ -123,6 +111,26 @@ public func executeInParallel<Seq: Sequence>(batch: Seq, threads: Int, worker: @
     }
     
     group.wait()
+}
+
+/// Process the items in `batch` in parallel by the function `worker` using `threads` number of threads.
+public func executeInParallel<T: Sendable>(batch: any Sequence<T>, threads: Int, worker: @escaping @Sendable (T) async -> ()) async {
+    let queue = DispatchQueue(label: "executeInParallel", attributes: .concurrent)
+    let group = DispatchGroup()
+    let semaphore = DispatchSemaphore(value: threads)
+    
+    // TODO:
+//    for item in batch {
+//        group.enter()
+//        semaphore.wait()
+//        queue.async {
+//            await worker(item)
+//            semaphore.signal()
+//            group.leave()
+//        }
+//    }
+//    
+//    group.wait()
 }
 
 extension String {

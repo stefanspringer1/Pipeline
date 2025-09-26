@@ -35,12 +35,14 @@ import Foundation
             await execution.effectuate("doing something in step2a", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 #expect(await execution.level == 3)
                 await execution.dispensable(named: "calling step3a and step3b in step2a", description: "we might want to skip step3a and step3b in step2a") {
-                    #expect(await execution.level == 4)
-                    step3a(during: await execution.synchronous)
-                    if stop {
-                        await execution.stop(reason: "for some reason")
+                    await execution.synchronous { synchronousExecution in
+                        #expect(synchronousExecution.level == 4)
+                        step3a(during: synchronousExecution)
+                        if stop {
+                            synchronousExecution.stop(reason: "for some reason")
+                        }
+                        step3b(during: synchronousExecution)
                     }
-                    step3b(during: await execution.synchronous)
                 }
             }
         }
@@ -48,9 +50,11 @@ import Foundation
         func step2b(during execution: AsyncExecution) async {
             await execution.effectuate("doing something in step2b", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 await execution.dispensable(named: "calling step3a in step2b", description: "we might want to skip step3a in step2b") {
-                    step3a(during: await execution.synchronous)
-                    await execution.force {
-                        step3a(during: await execution.synchronous)
+                    await execution.synchronous { synchronousExecution in
+                        step3a(during: synchronousExecution)
+                        synchronousExecution.force {
+                            step3a(during: synchronousExecution)
+                        }
                     }
                 }
             }

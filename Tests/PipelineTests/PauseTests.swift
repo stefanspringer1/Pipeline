@@ -26,7 +26,7 @@ import Foundation
         }
         
         /// Wait until the processing is not paused.
-        func waitNotPaused() {
+        @Sendable func waitNotPaused() {
             semaphoreForPause.wait(); semaphoreForPause.signal()
         }
         
@@ -37,7 +37,7 @@ import Foundation
         let waitTimeBeforeContinuingProcessing = waitTimeBeforePausingProcessing + waitTimeStep1
         let waitTimeAfterContinuingProcessing = waitTimeStep1 / 2
         
-        func step1(during execution: Execution) {
+        @Sendable func step1(during execution: Execution) {
             execution.effectuate("doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 print("PROCESSING: starting step1")
                 print("PROCESSING: waiting \(waitTimeStep1) seconds in step1...")
@@ -49,7 +49,7 @@ import Foundation
             }
         }
         
-        func step2(during execution: Execution) {
+        @Sendable func step2(during execution: Execution) {
             execution.effectuate("doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 print("PROCESSING: in step2")
             }

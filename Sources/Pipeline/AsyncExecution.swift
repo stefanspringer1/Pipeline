@@ -8,15 +8,30 @@ public final actor AsyncExecution {
     
     let synchronousExecution: Execution
     
+    public var state: ExecutionState { get async { synchronousExecution.state } }
+    
     public var metadataInfo: String { synchronousExecution.metadataInfo }
     public var metadataInfoForUserInteraction: String { synchronousExecution.metadataInfoForUserInteraction }
     
-    public var synchronous: Execution {
-        get async { synchronousExecution }
+    public func synchronous(work: (Execution) -> ()) async {
+        let execution = Execution(
+            language: synchronousExecution.language,
+            executionEventProcessor: synchronousExecution.executionEventProcessor,
+            stopAtFatalError: synchronousExecution.stopAtFatalError,
+            effectuationStack: synchronousExecution.effectuationStack,
+            withOptions: synchronousExecution.activatedOptions,
+            dispensingWith: synchronousExecution.dispenseWith,
+            waitNotPausedFunction: synchronousExecution.waitNotPausedFunction,
+        )
+        execution.executedSteps = synchronousExecution.executedSteps
+        execution._stopped = synchronousExecution._stopped
+        work(execution)
+        synchronousExecution.executedSteps = execution.executedSteps
+        synchronousExecution._stopped = execution._stopped
     }
     
     public func setting(
-        waitNotPausedFunction: (() -> ())? = nil
+        waitNotPausedFunction: (@Sendable () -> ())? = nil
     ) -> Self {
         if let waitNotPausedFunction {
             synchronousExecution.waitNotPausedFunction = waitNotPausedFunction
@@ -24,35 +39,38 @@ public final actor AsyncExecution {
         return self
     }
     
-    public var parallel: AsyncExecution {
-        AsyncExecution(
-            executionEventProcessor: synchronousExecution.executionEventProcessor,
-            effectuationStack: synchronousExecution._effectuationStack,
-            waitNotPausedFunction: synchronousExecution.waitNotPausedFunction
-        )
-    }
-    
     public init(
         language: Language = .en,
         processID: String? = nil,
         executionEventProcessor: any ExecutionEventProcessor,
         stopAtFatalError: Bool = true,
-        effectuationStack: [Effectuation] = [Effectuation](),
         withOptions activatedOptions: Set<String>? = nil,
         dispensingWith dispensedWith: Set<String>? = nil,
-        waitNotPausedFunction: (() -> ())? = nil,
-        logFileInfo: URL? = nil
+        waitNotPausedFunction: (@Sendable () -> ())? = nil,
     ) {
         self.synchronousExecution = Execution(
             language: language,
             executionEventProcessor: executionEventProcessor,
             stopAtFatalError: stopAtFatalError,
-            effectuationStack: effectuationStack,
             withOptions: activatedOptions,
             dispensingWith: dispensedWith,
             waitNotPausedFunction: waitNotPausedFunction,
-            logFileInfo: logFileInfo
         )
+    }
+    
+    public init(withExecutionState executionState: ExecutionState) {
+        self.synchronousExecution = Execution(
+            language: executionState.language,
+            executionEventProcessor: executionState.executionEventProcessor,
+            stopAtFatalError: executionState.stopAtFatalError,
+            withOptions: executionState.activatedOptions,
+            dispensingWith: executionState.dispenseWith,
+            waitNotPausedFunction: executionState.waitNotPausedFunction,
+        )
+        self.synchronousExecution._effectuationStack = executionState.effectuationStack
+        self.synchronousExecution.forceValues = executionState.forceValues
+        self.synchronousExecution.appeaseTypes = executionState.appeaseTypes
+        self.synchronousExecution._stopped = executionState.stopped
     }
     
     public var level: Int {
@@ -149,7 +167,7 @@ public final actor AsyncExecution {
     
     /// Something that does not run in the normal case but ca be activated. Should use module name as prefix.
     public func optional<T>(named partName: String, description: String? = nil, work: () async throws -> T) async rethrows -> T? {
-        if synchronousExecution.activatedOptions?.contains(partName) != true || synchronousExecution.dispensedWith?.contains(partName) == true {
+        if synchronousExecution.activatedOptions?.contains(partName) != true || synchronousExecution.dispenseWith?.contains(partName) == true {
             synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
@@ -201,7 +219,7 @@ public final actor AsyncExecution {
     
     /// Something that runs in the normal case but ca be dispensed with. Should use module name as prefix.
     public func dispensable<T>(named partName: String, description: String? = nil, work: () async throws -> T) async rethrows -> T? {
-        if synchronousExecution.dispensedWith?.contains(partName) == true {
+        if synchronousExecution.dispenseWith?.contains(partName) == true {
             synchronousExecution.executionEventProcessor.process(
                 ExecutionEvent(
                     type: .progress,
