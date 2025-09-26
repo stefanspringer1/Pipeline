@@ -13,11 +13,11 @@ To facilitate further description, we will already introduce some of the types u
 
 This framework does not provide its own logging implementation. However, the logging used by packages should be able to be formulated independently of the actual logging implementation. Log messages can therefore be generated via methods of the `Execution` instance and then must be processed by an `ExecutionEventProcessor` provided by you. The `ExecutionEventProcessor` must also handle information about the execution of the steps. Either is realized as an `ExecutionEvent`, which the `ExecutionEventProcessor` must be able to process. This `ExecutionEvent` contains all parts of the information as separate entities, but a simple textual representation can be easily configured. More granular error types are available than in most actual logging implementations, which you can map to the message types of the logging implementation used by your application.
 
+To make parallel processing and swiching from an asynchronous context to a synchronous one possible in an easy way, the `ExecutionEventProcessor` has to be `Sendable` without being an actor. You can achieve this for an `ExecutionEventProcessor` with changing state by organising concurrent access to this state (which you can do without implementing actors) and using the `@unchecked Sendable` notation, which is an appropriate approach. See the implementations for the tests.
+
 When only logging via the `Execution` instance, you can easily build a tree structure from the `ExecutionEvent` instances.
 
 Concerning metadata such as a “process ID”, pipline steps in general and especially pipline steps from other packages should not need to know about it. The `ExecutionEventProcessor` should handle any metadata and add it to the actual log entries if required, the implementation of `ExecutionEvent` facilitates this. Any more precise data you need for your own steps should generally be covered in additional arguments for your steps. (If the metadata information is actually needed during processing in a general form, especially by an external package, it can be requested via the `metadataInfo` or `metadataInfoForUserInteraction` property of the `Execution` which in turn gets the information from the `ExecutionEventProcessor`.)
-
-The framework can also handle the parallel processing of partial work items and handle asynchronous calls.
 
 This documentation contains some motivation. For a quick start, there is a tutorial below. For more details, you might look at the conventions (between horizontal rules) given further below and look at some code samples from the contained tests.
 
