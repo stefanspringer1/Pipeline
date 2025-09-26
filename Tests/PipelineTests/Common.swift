@@ -47,14 +47,55 @@ public final class CollectingLogger: @unchecked Sendable, Logger {
     
 }
 
+/// Keeps track of the severity i.e. the worst message type.
+public final class SeverityTracker: @unchecked Sendable {
+    
+    private var _severity = InfoType.allCases.min()!
+    let messagesSemaphore = DispatchSemaphore(value: 1)
+    
+    /// Gets the current severity.
+    var value: InfoType {
+        messagesSemaphore.wait()
+        wait()
+        let value = _severity
+        messagesSemaphore.signal()
+        return value
+    }
+    
+    internal let group = DispatchGroup()
+    internal let queue = DispatchQueue(label: "CollectingLogger", qos: .background)
+    
+    public func process(_ newSeverity: InfoType) {
+        group.enter()
+        self.queue.sync {
+            messagesSemaphore.wait()
+            if newSeverity > _severity {
+                _severity = newSeverity
+            }
+            messagesSemaphore.signal()
+            self.group.leave()
+        }
+    }
+    
+    /// Wait until all logging is done.
+    public func wait() {
+        group.wait()
+    }
+    
+}
+
 public final class ExecutionEventProcessorForLogger: ExecutionEventProcessor {
     
     public let metadataInfo: String
     public let metadataInfoForUserInteraction: String
     
     private let logger: Logger
+    private let severityTracker = SeverityTracker()
     private let minimalInfoType: InfoType?
     private let excutionInfoFormat: ExecutionInfoFormat?
+    
+    /// The the severity i.e. the worst message type.
+    var severity: InfoType { severityTracker.value }
     
     init(
         withMetaDataInfo metadataInfo: String,
@@ -71,6 +112,7 @@ public final class ExecutionEventProcessorForLogger: ExecutionEventProcessor {
     }
     
     public func process(_ executionEvent: ExecutionEvent) {
+        severityTracker.process(executionEvent.type)
         if let minimalInfoType, executionEvent.type < minimalInfoType {
             return
         }

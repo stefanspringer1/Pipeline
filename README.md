@@ -535,6 +535,10 @@ func hello_external_step(
 }
 ```
 
+### Getting the worst message type
+
+Tracking the the worst message type should be done by the `ExecutionEventProcessor`. This worst message type could be a value of the actual logging system.
+
 ### Throwing errors
 
 If an error occurs during a step, it is naturally propagated until it is caught in the code. There is no special handling of thrown errors by the framework. So step where the error is not catched yet will not be ending (an according message is not being logged), but as soon as the error gets catched inside a step, the following events do have the correct level and execution path.
@@ -567,16 +571,14 @@ The `ExecutionEvent` instance can actually seen as part of a tree, e.g. the begi
 
 Note that when logging by directly using your logging implemention and not the `Execution` instance, you do not get an `ExecutionEvent` and there your log messages are not part of the sdescribed tructure.
 
-### Parallel execution
-
-To execute steps in paralell, 
-
-Use `execution.parallel` to create a copy of an `execution` to use in a parallelization. Of course, you then need a logger that can handle conccurent logging.
-
-See the example `parallelTest1()` in the tests.
-
-Note that the parallel steps are not registered in the execution database. But the above code migth be part of anther step not executed in parallel, and that one will then be registered.
-
 ### Pause/stop
 
 In order to pause or stop the execution of steps, appropriate methods of `Execution` are available. See the `pauseTest()` function in the tests.
+
+### Parallel execution
+
+To execute steps in parallel, first get the current state of the execution, which is then used to initialize execution with that state in parallel.
+
+See the examples in the `ParallelTests` test suite.
+
+Note that no new state from the parellel execution are put back into the oroginal execution. In particular the parallel steps are not registered in the original execution, and so is any stop not brought to the original execution.
