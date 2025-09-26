@@ -154,7 +154,7 @@ import Foundation
         let threads = 5
         
         let executionState = await execution.state
-        await executeInParallel(batch: numbers, threads: threads) { number in
+        executeInParallel(batch: numbers, threads: threads) { number in
             
             let parallelExecution = AsyncExecution(withExecutionState: executionState)
             await step1(during: parallelExecution, number: number)

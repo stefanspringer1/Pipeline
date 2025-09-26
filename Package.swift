@@ -34,10 +34,6 @@ let package = Package(
             name: "PipelineTests",
             dependencies: [
                 "Pipeline"
-            ],
-            swiftSettings: [
-                .enableUpcomingFeature("ConciseMagicFile"),
-                .enableUpcomingFeature("BareSlashRegexLiterals"),
             ]
         ),
     ]

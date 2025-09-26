@@ -114,23 +114,21 @@ public func executeInParallel<T: Sendable>(batch: any Sequence<T>, threads: Int,
 }
 
 /// Process the items in `batch` in parallel by the function `worker` using `threads` number of threads.
-public func executeInParallel<T: Sendable>(batch: any Sequence<T>, threads: Int, worker: @escaping @Sendable (T) async -> ()) async {
-    let queue = DispatchQueue(label: "executeInParallel", attributes: .concurrent)
+public func executeInParallel<T: Sendable>(batch: any Sequence<T>, threads: Int, worker: @escaping @Sendable (T) async -> ()) {
     let group = DispatchGroup()
     let semaphore = DispatchSemaphore(value: threads)
     
-    // TODO:
-//    for item in batch {
-//        group.enter()
-//        semaphore.wait()
-//        queue.async {
-//            await worker(item)
-//            semaphore.signal()
-//            group.leave()
-//        }
-//    }
-//    
-//    group.wait()
+    for item in batch {
+        group.enter()
+        semaphore.wait()
+        Task {
+            await worker(item)
+            semaphore.signal()
+            group.leave()
+        }
+    }
+    
+    group.wait()
 }
 
 extension String {
