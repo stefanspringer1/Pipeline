@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol ExecutionEventProcessor: Sendable {
+public protocol ExecutionEventProcessor: AnyObject, Sendable {
     func process(_ executionEvent: ExecutionEvent)
     var metadataInfo: String { get }
     var metadataInfoForUserInteraction: String { get }
