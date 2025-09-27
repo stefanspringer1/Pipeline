@@ -84,7 +84,7 @@ public final class SeverityTracker: @unchecked Sendable {
     
 }
 
-public final class ExecutionEventProcessorForLogger: ExecutionEventProcessor {
+public struct ExecutionEventProcessorForLogger: ExecutionEventProcessor {
     
     public let metadataInfo: String
     public let metadataInfoForUserInteraction: String
