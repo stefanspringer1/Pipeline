@@ -6,12 +6,6 @@ public protocol ExecutionEventProcessor: Sendable {
     var metadataInfoForUserInteraction: String { get }
 }
 
-public protocol AsyncExecutionEventProcessor {
-    func process(_ executionEvent: ExecutionEvent) async
-    var metadataInfo: String { get }
-    var metadataInfoForUserInteraction: String { get }
-}
-
 public struct StepID: Hashable, CustomStringConvertible, Sendable {
     
     public let crossModuleFileDesignation: String
