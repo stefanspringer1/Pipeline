@@ -15,7 +15,7 @@ This framework does not provide its own logging implementation. However, the log
 
 To easily enable parallel processing and switching from an asynchronous to a synchronous context, an `ExecutionEventProcessor` must be sendable without being an actor. To achieve this, encapsulate its mutatable state inside one or sevaral classes which use the `@unchecked Sendable` notation where concurrent access to that state is controlled without involving actors. Such an `@unchecked Sendable` class might be the `ExecutionEventProcessor` itself, a class directly referenced by it, or an a deeper level, e.g. a logger used by the `ExecutionEventProcessor` might itself encapsulate its mutable state by this method, so it can be a constant sendable value inside the `ExecutionEventProcessor`. For parallel processing, the state of one execution (including the sendable `ExecutionEventProcessor`) can be extracted and used to easily create subsequent executions that further process that state; this state is sendable, even though the execution itself is not.
 
-Steps that are potentially being executed in a parallel have to be sendable.
+Potentially parallel executed steps must be sendable.
 
 When only logging via the `Execution` instance, you can easily build a tree structure from the `ExecutionEvent` instances.
 
