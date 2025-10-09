@@ -35,7 +35,6 @@ import Foundation
         #expect(waitTimeStep1 > 0)
         let waitTimeBeforePausingProcessing = waitTimeStep1 / 2
         let waitTimeBeforeContinuingProcessing = waitTimeBeforePausingProcessing + waitTimeStep1
-        let waitTimeAfterContinuingProcessing = waitTimeStep1 / 2
         
         @Sendable func step1(during execution: Execution) {
             execution.effectuate("doing something in step1", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
@@ -79,7 +78,8 @@ import Foundation
         
         print("------------------------------------")
         
-        DispatchQueue.global(qos: .userInitiated).async {
+        let task = Task {
+            
             let logger = CollectingLogger()
             let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInfo: metadata.description, logger: logger, excutionInfoFormat: ExecutionInfoFormat(addIndentation: true))
             
@@ -109,8 +109,8 @@ import Foundation
         try await Task.sleep(for: .seconds(waitTimeBeforeContinuingProcessing))
         print("CONTROLLER: continuing...")
         proceed()
-        print("CONTROLLER: waiting \(waitTimeAfterContinuingProcessing) more seconds so the processing will be finished...")
-        try await Task.sleep(for: .seconds(waitTimeAfterContinuingProcessing))
+        print("CONTROLLER: waiting for the processing to finish...")
+        _ = await task.result
         print("CONTROLLER: DONE.")
         
         print("------------------------------------")
