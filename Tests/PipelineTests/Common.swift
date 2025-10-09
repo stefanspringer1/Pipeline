@@ -26,7 +26,7 @@ public final class CollectingLogger: @unchecked Sendable, Logger {
     }
     
     internal let group = DispatchGroup()
-    internal let queue = DispatchQueue(label: "CollectingLogger", qos: .background)
+    internal let queue = DispatchQueue(label: "CollectingLogger")
     
     public func log(_ message: String) {
         group.enter()
@@ -56,7 +56,7 @@ public final class SeverityTracker: @unchecked Sendable {
     }
     
     internal let group = DispatchGroup()
-    internal let queue = DispatchQueue(label: "CollectingLogger", qos: .background)
+    internal let queue = DispatchQueue(label: "CollectingLogger")
     
     public func process(_ newSeverity: InfoType) {
         group.enter()
