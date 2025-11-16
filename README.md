@@ -37,22 +37,14 @@ The top-level dependency:
 .package(url: "https://github.com/stefanspringer1/Pipeline", from: "...put the minimal version number here..."),
 ```
 
-(You might reference an exact version by defining e.g. `.exact("0.0.1")` instead.)
+(You might reference an exact version by defining e.g. `.exact("1.0.1")` instead.)
 
 As dependency of your product, you then just add `"Pipeline"`.
 
-As long as the [concise magic file name](https://github.com/apple/swift-evolution/blob/main/proposals/0274-magic-file.md) is not yet the default for your Swift version, you need to enable it via the following [upcoming feature flag](https://www.swift.org/blog/using-upcoming-feature-flags/) for your target:
+The Pipeline package will be then usable in a Swift file after adding the following import:
 
 ```Swift
-swiftSettings: [
-    .enableUpcomingFeature("ConciseMagicFile"),
-]
-```
-
-The Workflow package will be then usable in a Swift file after adding the following import:
-
-```Swift
-import PipelineCore
+import Pipeline
 ```
 
 ## Tutorial
@@ -82,46 +74,26 @@ let myExecutionEventProcessor = ExecutionEventProcessorForLogger(withMetaDataInf
 let execution = Execution(executionEventProcessor: myExecutionEventProcessor)
 ```
 
-The step you call (in the following example: `myWork_step`) might have any other arguments besides the `Execution` and some logger, and the postfix `_step` is only for convention. Your step might be implemented as follows:
+The step you call (in the following example: `myWork_step`) might have any other arguments besides the `Execution`, and the postfix `_step` is only for convention. Your step might be implemented as follows:
 
 ```Swift
+@Step("...here a description can be added...")
 func myWork_step(during execution: Execution) {
-    execution.effectuate(
-        "...here a description can be added...",
-        checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)
-    ) {
-        
-        // ... some other code...
-        
-        myOther_step(during: execution)
-        
-        // ... some other code...
-        
-    }
+    
+    // ... some other code...
+    
+    myOther_step(during: execution)
+    
+    // ... some other code...
+    
 }
 ```
-
-The value `StepID(crossModuleFileDesignation: #file, functionSignature: #function)` of the `checking:` argument is used to uniquely identify the step.
-
-`#file` should denote the [concise magic file name](https://github.com/apple/swift-evolution/blob/main/proposals/0274-magic-file.md) `<module-name>/<file-name>` (you might have to use the [upcoming feature flag](https://www.swift.org/blog/using-upcoming-feature-flags/) `ConciseMagicFile` for this, see the `Package.swift` file of this package).
-
-I.e. you embrace the content of your function inside a `execution.effectuate` call so that the `Execution` instance can control and inform about the execution of your code. The `StepID` instance is used as a unique identifier for your step.
-
----
-
-NOTE:
-
-There is also a macro to just annotate a function with `@Step` so you do not have to add the `execution.effectuate` code yourself, but there are still an issue with this macro that needs to resolved (the placement of error annotations is not correct).
-
----
 
 The call of this step is then as follows:
 
 ```Swift
 myWork_step(during: execution)
 ```
-
-_Note that in order to be able to use future enhancemants of the library, you should not have code outside this single call of `effectuate` in your function!_
 
 Inside your step you might call other steps. In the example above, `myOther_step` has the same arguments as `myWork_step`, but in the general case, this does not have to be this way. On the contrary, our recommendation is to only give to each step the data that it really needs.
 
@@ -217,7 +189,7 @@ We will see in the next section how this is resolved. For the second question ("
 ---
 **Convention**
 
-A function representing a step has the postfix `_step` in its name.
+In addition to the `@Step` annotation and the argument with the inner-fiunction name `execution`, a function representing a step has the postfix `_step` in its name.
 
 ---
 
@@ -243,15 +215,12 @@ We say that a step “gets executed” when we actually mean that the statements
 A step fullfilling "task a" is to be formulated as follows. In the example below, `data` is the instance of a class being changed during the execution (of cource, our steps could also return a value, and different interacting steps can have different arguments). The execution keeps track of the steps run by using _a unique identifier for each step._ An instance of `StepID` is used as such an identifier, which contains a) a designation for the file that is unique across modules (using [concise magic file name](https://github.com/apple/swift-evolution/blob/main/proposals/0274-magic-file.md)), and b) using the function signature which is unique when using only top-level functions as steps.
 
 ```Swift
+@Step
 func a_step(
     during execution: Execution,
     data: MyData
 ) {
-    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-        
-            execution.log(.info, "working in step a")
-        
-    }
+    execution.log(.info, "working in step a")
 }
 ```
 
@@ -259,24 +228,19 @@ func a_step(
 **Convention**
 
 - A function representing a step is a top-level function.
-- Use the function signature available via `"\(#function)@\(#file.firstPathPart)"` as the identifier in the call of the `effectuate` method.
 
 ---
 
 Let us see how we call the step `a_step` inside another step `b_step`:
 
 ```Swift
+@Step
 func b_step(
     during execution: Execution,
     data: MyData
 ) {
-    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-        
-        a_step(during: execution, data: data)
-        
-        execution.log(.info, "working in step b")
-        
-    }
+    a_step(during: execution, data: data)
+    execution.log(.info, "working in step b")
 }
 ```
 
@@ -285,18 +249,15 @@ Here, the call to `a_step` can be seen as the formulation of a requirement for t
 Let us take another step `c_step` which first calls `a_step`, and then `b_step`:
 
 ```Swift
+@Step
 func c_step(
     during execution: Execution,
     data: MyData
 ) {
-    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+    a_step(during: execution, data: data)
+    b_step(during: execution, data: data)
         
-       a_step(during: execution, data: data)
-       b_step(during: execution, data: data)
-        
-      execution.log(.info, "working in step c")
-        
-    }
+    execution.log(.info, "working in step c")
 }
 ```
 
@@ -317,19 +278,16 @@ Requirements for a step are formulated by just calling the accordings steps (i.e
 But sometimes a certain other step is needed just before a certain point in the processing, no matter if it already has been run before. In that case, you can use the `force` method of the execution:
 
 ```Swift
+@Step
 func b_step(
     during execution: Execution,
     data: MyData
 ) {
-    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-        
-        execution.force {
-            a_step(during: execution, data: data)
-        }
-        
-        execution.log(.info, "working in step b")
-        
+    execution.force {
+        a_step(during: execution, data: data)
     }
+    
+    execution.log(.info, "working in step b")
 }
 ```
 
@@ -338,20 +296,17 @@ Now `a_step` always runs inside `b_step` (if `b_step` gets executed).
 Note that any sub-steps of a forced step are _not_ automatically forced. But you can pass a forced execution onto a sub-step by calling it inside `inheritForced`:
 
 ```Swift
+@Step
 func b_step(
     during execution: Execution,
     data: MyData
 ) {
-    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-        
-        execution.inheritForced {
-            // this execution of a_step is forced if the current execution of b_step has been forced:
-            a_step(during: execution, data: data)
-        }
-        
-        execution.log(.info, "working in step b")
-        
+    execution.inheritForced {
+        // this execution of a_step is forced if the current execution of b_step has been forced:
+        a_step(during: execution, data: data)
     }
+    
+    execution.log(.info, "working in step b")
 }
 ```
 
@@ -367,44 +322,41 @@ Use the `Execution.force` method if a certain step has to be run at a certain po
 If the step is to return a value, this must to be an optional one:
 
 ```Swift
+@Step
 func my_step(
     during execution: Execution,
     data: MyData
 ) -> String? {
-    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-        ...
-        return "my result"
-        ...
+    return "my result"
+}
+```
+
+The reason for this is that the body of this function might not be executed, so if you return a `String` inside the function body, then the return type of the function is `String?`. 
+
+And if the function body is itself is meant to return an optional value:
+
+```Swift
+@Step
+func optionalHello_step(during execution: Execution, condition: Bool) -> String?? {
+    if condition {
+        return "hello 1"
+    } else {
+        return nil
     }
 }
 ```
 
-Note that the `effectuate` method returns the according value, so there is no need to set up any variable outside the `effectuate` call.
+Which can be used as follows:
 
-_The optionality must stem from the fact that the execution might be effectuated or not._ If the code within the `effectuate` call is itself is meant to return an optional value, this has to be done e.g. via the `Result` struct:
-
-```Swift
-func my_step(
-    during execution: Execution,
-    data: MyData
-) -> Result<String, ErrorWithDescription>? {
-    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-        ...
-        var value: String?
-        ...
-        if let value {
-            return .success(value)
-        } else {
-            return .failure(ErrorWithDescription("the value is not set")))
-        }
-}
-```
-
-You can then check if (in the example) a `String` value is returned by e.g.:
-
-```Swift
-if case .success(let text) = my_step(during: execution:, data: MyData) {
-    print(text)
+```swift
+@Step
+func hello_step(during execution: Execution, condition: Bool) -> String? {
+    if let executionResult = optionalHello_step(during: execution, condition: condition),
+       let value = executionResult {
+        return value
+    } else {
+        return "hello 2"
+    }
 }
 ```
 
@@ -429,6 +381,7 @@ In practice we think that this limitation is not a severe one, because usually a
 Steps as described should be flexible enough for the definition of a sequence of processing. But in some circumstances you might want to distinguish between a step that reads (and maybe writes) the data that you would like to process, and the steps in between that processes that data. A step that reads (and maybe writes) the data would then be the starting point for a processing. We call such a step a “job” and give its name the postfix `_job` instead of `_step`:
 
 ```Swift
+@Step
 func helloAndBye_job(
     during execution: Execution,
     file: URL
@@ -523,16 +476,13 @@ So the caller can execute the according code in `execution.appease { … }`. In 
 So using an "external" step would actually be formulated as follows in most cases:
 
 ```Swift
+@Step
 func hello_external_step(
     during execution: Execution,
     data: MyData
 ) {
-    execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-    
-        execution.appease {
-            hello_lib(during: execution, data: data)
-        }
-        
+    execution.appease {
+        hello_lib(during: execution, data: data)
     }
 }
 ```
@@ -558,6 +508,7 @@ Note that any following code not belonging to any further step is still being ex
 A step might also be asynchronous, i.e. the caller might get suspended. Let's suppose that for some reason `bye_step` from above is async (maybe we are building a web application and `bye_step` has to fetch data from a database):
 
 ```Swift
+@Step
 func bye_step(
     during execution: AsyncExecution,
     data: MyData
