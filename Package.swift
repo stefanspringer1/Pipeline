@@ -35,7 +35,7 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         .package(url: "https://github.com/stefanspringer1/Localization.git", from: "0.0.6"),
-        .package(url: "https://github.com/apple/swift-syntax.git", from: "600.0.1"),
+        .package(url: "https://github.com/apple/swift-syntax.git", from: "602.0.0"),
     ],
     targets: [
         
