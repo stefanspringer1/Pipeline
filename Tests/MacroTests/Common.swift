@@ -179,20 +179,23 @@ extension String {
     }
 }
 
+/// Get the ellapsed seconds since `start`.
+/// The time to compare to is either the current time or the value of the argument `reference`.
+func elapsedSeconds(start: ContinuousClock.Instant, reference: ContinuousClock.Instant = ContinuousClock.now) -> Double {
+    let duration = start.duration(to: reference)
+    return Double(duration.attoseconds) / 1e18
+}
+
 func elapsedTime(of f: () -> Void) -> Double {
-    let startTime = DispatchTime.now()
+    let startTime = ContinuousClock.now
     f()
-    let endTime = DispatchTime.now()
-    let elapsedTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-    return Double(elapsedTime) / 1_000_000_000
+    return elapsedSeconds(start: startTime)
 }
 
 func elapsedTime(of f: () async -> Void) async -> Double {
-    let startTime = DispatchTime.now()
+    let startTime = ContinuousClock.now
     await f()
-    let endTime = DispatchTime.now()
-    let elapsedTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-    return Double(elapsedTime) / 1_000_000_000
+    return elapsedSeconds(start: startTime)
 }
 
 public struct TestError: Error, CustomStringConvertible  {

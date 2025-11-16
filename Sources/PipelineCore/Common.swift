@@ -239,6 +239,7 @@ public enum ExecutionCoreEvent: CustomStringConvertible {
 
 /// Get the ellapsed seconds since `start`.
 /// The time to compare to is either the current time or the value of the argument `reference`.
-func elapsedSeconds(start: DispatchTime, reference: DispatchTime = DispatchTime.now()) -> Double {
-    return Double(reference.uptimeNanoseconds - start.uptimeNanoseconds) / 1_000_000_000
+func elapsedSeconds(start: ContinuousClock.Instant, reference: ContinuousClock.Instant = ContinuousClock.now) -> Double {
+    let duration = start.duration(to: reference)
+    return Double(duration.attoseconds) / 1e18
 }

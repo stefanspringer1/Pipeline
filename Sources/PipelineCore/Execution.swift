@@ -458,7 +458,7 @@ public final class Execution {
     public func effectuate<T>(_ description: String? = nil, checking step: StepID, work: () throws -> T) rethrows -> T? {
         let (execute: toBeExecuted, forced: forced, structuralID: structuralID) = effectuateTest(forStep: step, withDescription: description)
         if toBeExecuted {
-            let start = DispatchTime.now()
+            let start = ContinuousClock.now
             let result = try execute(step: step, description: description, force: false, work: work)
             after(step: step, structuralID: structuralID, description: description, forced: forced, secondsElapsed: elapsedSeconds(start: start))
             return result

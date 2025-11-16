@@ -8,7 +8,7 @@ let package = Package(
     name: "Pipeline",
     platforms: [
         .iOS(.v16),
-        .macOS(.v13),
+        .macOS(.v15),
         .tvOS(.v16),
         .watchOS(.v9),
     ],
