@@ -1,5 +1,5 @@
 import Testing
-import Pipeline
+import PipelineCore
 import Foundation
 import Localization
 
@@ -46,18 +46,18 @@ import Localization
         step1(during: execution)
         
         #expect(logger.messages.joined(separator: "\n") == """
-            {progress} beginning step step1(during:)@PipelineTests (doing something in step1)
-                {progress} beginning step step2(during:)@PipelineTests (doing something in step2) [@@ step step1(during:)@PipelineTests -> ]
-                    {info} hello [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests]
-                    {progress} beginning dispensible part "we might dispense with step 3" [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> ]
-                        {progress} beginning step step3(during:)@PipelineTests (doing something in step3) [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> dispensable part "we might dispense with step 3" -> ]
-                            {progress} beginning forcing steps [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> dispensable part "we might dispense with step 3" -> step step3(during:)@PipelineTests -> ]
-                                {info} hello again [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> dispensable part "we might dispense with step 3" -> step step3(during:)@PipelineTests -> forcing]
-                            {progress} ending forcing steps [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> dispensable part "we might dispense with step 3" -> step step3(during:)@PipelineTests -> ]
-                        {progress} ending step step3(during:)@PipelineTests (doing something in step3) [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> dispensable part "we might dispense with step 3" -> ]
-                    {progress} ending dispensible part "we might dispense with step 3" [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> ]
-                {progress} ending step step2(during:)@PipelineTests (doing something in step2) [@@ step step1(during:)@PipelineTests -> ]
-            {progress} ending step step1(during:)@PipelineTests (doing something in step1)
+            {progress} beginning step step1(during:)@PipelineCoreTests (doing something in step1)
+                {progress} beginning step step2(during:)@PipelineCoreTests (doing something in step2) [@@ step step1(during:)@PipelineCoreTests -> ]
+                    {info} hello [@@ step step1(during:)@PipelineCoreTests -> step step2(during:)@PipelineCoreTests]
+                    {progress} beginning dispensible part "we might dispense with step 3" [@@ step step1(during:)@PipelineCoreTests -> step step2(during:)@PipelineCoreTests -> ]
+                        {progress} beginning step step3(during:)@PipelineCoreTests (doing something in step3) [@@ step step1(during:)@PipelineCoreTests -> step step2(during:)@PipelineCoreTests -> dispensable part "we might dispense with step 3" -> ]
+                            {progress} beginning forcing steps [@@ step step1(during:)@PipelineCoreTests -> step step2(during:)@PipelineCoreTests -> dispensable part "we might dispense with step 3" -> step step3(during:)@PipelineCoreTests -> ]
+                                {info} hello again [@@ step step1(during:)@PipelineCoreTests -> step step2(during:)@PipelineCoreTests -> dispensable part "we might dispense with step 3" -> step step3(during:)@PipelineCoreTests -> forcing]
+                            {progress} ending forcing steps [@@ step step1(during:)@PipelineCoreTests -> step step2(during:)@PipelineCoreTests -> dispensable part "we might dispense with step 3" -> step step3(during:)@PipelineCoreTests -> ]
+                        {progress} ending step step3(during:)@PipelineCoreTests (doing something in step3) [@@ step step1(during:)@PipelineCoreTests -> step step2(during:)@PipelineCoreTests -> dispensable part "we might dispense with step 3" -> ]
+                    {progress} ending dispensible part "we might dispense with step 3" [@@ step step1(during:)@PipelineCoreTests -> step step2(during:)@PipelineCoreTests -> ]
+                {progress} ending step step2(during:)@PipelineCoreTests (doing something in step2) [@@ step step1(during:)@PipelineCoreTests -> ]
+            {progress} ending step step1(during:)@PipelineCoreTests (doing something in step1)
             """
         )
     }
@@ -241,22 +241,22 @@ import Localization
         var uuidReplacements = UUIDReplacements()
         
         #expect(uuidReplacements.doReplacements(in: logger.messages.joined(separator: "\n")) == """
-            {progress} beginning step step1(during:)@PipelineTests <#1>
-                {progress} beginning step step2(during:)@PipelineTests <#2>
+            {progress} beginning step step1(during:)@PipelineCoreTests <#1>
+                {progress} beginning step step2(during:)@PipelineCoreTests <#2>
                     {info} hello <>
                     {progress} beginning dispensible part "calling step 3" <#3>
-                        {progress} beginning step step3(during:)@PipelineTests <#4>
+                        {progress} beginning step step3(during:)@PipelineCoreTests <#4>
                             {progress} beginning forcing steps <#5>
                                 {info} hello again <>
                             {progress} ending forcing steps <#5>
-                        {progress} ending step step3(during:)@PipelineTests <#4>
-                        {progress} skipping previously executed step step3(during:)@PipelineTests <>
+                        {progress} ending step step3(during:)@PipelineCoreTests <#4>
+                        {progress} skipping previously executed step step3(during:)@PipelineCoreTests <>
                         {progress} beginning forcing steps <#6>
-                            {progress} beginning forced step step3(during:)@PipelineTests <#7>
+                            {progress} beginning forced step step3(during:)@PipelineCoreTests <#7>
                                 {progress} beginning forcing steps <#8>
                                     {info} hello again <>
                                 {progress} ending forcing steps <#8>
-                            {progress} ending forced step step3(during:)@PipelineTests <#7>
+                            {progress} ending forced step step3(during:)@PipelineCoreTests <#7>
                         {progress} ending forcing steps <#6>
                     {progress} ending dispensible part "calling step 3" <#3>
                     {progress} skipping dispensible part "dispensable message" <>
@@ -264,8 +264,8 @@ import Localization
                     {progress} beginning optional part "option 2" <#9>
                         {info} option 2? <>
                     {progress} ending optional part "option 2" <#9>
-                {progress} ending step step2(during:)@PipelineTests <#2>
-            {progress} ending step step1(during:)@PipelineTests <#1>
+                {progress} ending step step2(during:)@PipelineCoreTests <#2>
+            {progress} ending step step1(during:)@PipelineCoreTests <#1>
             """
         )
     }
@@ -343,15 +343,15 @@ import Localization
         var uuidReplacements = UUIDReplacements()
         
         #expect(uuidReplacements.doReplacements(in: logger.messages.joined(separator: "\n")) == """
-            {progress} beginning step step1(during:)@PipelineTests <#1>
-                {progress} beginning step step2(during:)@PipelineTests <#2>
+            {progress} beginning step step1(during:)@PipelineCoreTests <#1>
+                {progress} beginning step step2(during:)@PipelineCoreTests <#2>
                     {progress} beginning dispensible part "calling step 3" <#3>
                         {progress} stopping execution: not calling step 3 <>
-                        {progress} skipping in an stopped environment step step3(during:)@PipelineTests <>
+                        {progress} skipping in an stopped environment step step3(during:)@PipelineCoreTests <>
                     {progress} ending dispensible part "calling step 3" <#3>
                     {info} hello again <>
-                {progress} stopped step step2(during:)@PipelineTests <#2>
-            {progress} stopped step step1(during:)@PipelineTests <#1>
+                {progress} stopped step step2(during:)@PipelineCoreTests <#2>
+            {progress} stopped step step1(during:)@PipelineCoreTests <#1>
             """
         )
     }

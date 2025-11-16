@@ -2,6 +2,7 @@
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
+import CompilerPluginSupport
 
 let package = Package(
     name: "Pipeline",
@@ -12,28 +13,77 @@ let package = Package(
         .watchOS(.v9),
     ],
     products: [
-        // Products define the executables and libraries a package produces, and make them visible to other packages.
+        
+        // PipelineCore (without the step macro):
+        .library(
+            name: "PipelineCore",
+            targets: ["PipelineCore"]),
+        
+        // The step macro:
+        .library(
+            name: "StepMacro",
+            targets: ["StepMacro"]
+        ),
+        
+        // The actual library to use:
         .library(
             name: "Pipeline",
-            targets: ["Pipeline"]),
+            targets: ["Pipeline"]
+        ),
+        
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/stefanspringer1/Localization.git", from: "0.0.4")
+        .package(url: "https://github.com/stefanspringer1/Localization.git", from: "0.0.4"),
+        .package(url: "https://github.com/apple/swift-syntax.git", from: "600.0.1"),
     ],
     targets: [
-        // Targets are the basic building blocks of a package. A target can define a module or a test suite.
-        // Targets can depend on other targets in this package, and on products in packages this package depends on.
+        
+        // PipelineCore (without the step macro):
         .target(
-            name: "Pipeline",
+            name: "PipelineCore",
             dependencies: [
                 "Localization",
             ]
         ),
         .testTarget(
-            name: "PipelineTests",
+            name: "PipelineCoreTests",
             dependencies: [
-                "Pipeline"
+                "PipelineCore"
+            ]
+        ),
+        
+        // The step macro:
+        .macro(
+            name: "StepMacros",
+            dependencies: [
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+                "PipelineCore",
+            ]
+        ),
+        .target(
+            name: "StepMacro",
+            dependencies: ["StepMacros"]
+        ),
+        .testTarget(
+            name: "MacroTests",
+            dependencies: [
+                "StepMacro",
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+                "PipelineCore",
+            ],
+            swiftSettings: [
+                .enableExperimentalFeature("BodyMacros"),
+            ]
+        ),
+        
+        // The actual library to use:
+        .target(
+            name: "Pipeline",
+            dependencies: [
+                "PipelineCore",
+                "StepMacro",
             ]
         ),
     ]

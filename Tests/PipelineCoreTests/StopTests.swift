@@ -1,5 +1,5 @@
 import Testing
-import Pipeline
+import PipelineCore
 import Foundation
 
 @Suite(.serialized) struct StopTests {
@@ -59,16 +59,16 @@ import Foundation
         step1(during: execution)
         
         #expect(logger.messages.joined(separator: "\n") == """
-            {progress} beginning step step1(during:)@PipelineTests
-                {progress} beginning step step2a(during:stop:)@PipelineTests
-                    {progress} beginning step step3aa(during:stop:)@PipelineTests
-                    {progress} ending step step3aa(during:stop:)@PipelineTests
+            {progress} beginning step step1(during:)@PipelineCoreTests
+                {progress} beginning step step2a(during:stop:)@PipelineCoreTests
+                    {progress} beginning step step3aa(during:stop:)@PipelineCoreTests
+                    {progress} ending step step3aa(during:stop:)@PipelineCoreTests
                     {fatal} cannot proceess the item any further
                     {progress} stopping execution: fatal error occurred
-                    {progress} skipping in an stopped environment step step3ab(during:stop:)@PipelineTests
-                {progress} stopped step step2a(during:stop:)@PipelineTests
-                {progress} skipping in an stopped environment step step2b(during:stop:)@PipelineTests
-            {progress} stopped step step1(during:)@PipelineTests
+                    {progress} skipping in an stopped environment step step3ab(during:stop:)@PipelineCoreTests
+                {progress} stopped step step2a(during:stop:)@PipelineCoreTests
+                {progress} skipping in an stopped environment step step2b(during:stop:)@PipelineCoreTests
+            {progress} stopped step step1(during:)@PipelineCoreTests
             """)
         
     }
@@ -122,16 +122,16 @@ import Foundation
         step1(during: execution)
         
         #expect(logger.messages.joined(separator: "\n") == """
-            {progress} beginning step step1(during:)@PipelineTests
-                {progress} beginning step step2a(during:stop:)@PipelineTests
-                    {progress} beginning step step3aa(during:stop:)@PipelineTests
-                    {progress} ending step step3aa(during:stop:)@PipelineTests
+            {progress} beginning step step1(during:)@PipelineCoreTests
+                {progress} beginning step step2a(during:stop:)@PipelineCoreTests
+                    {progress} beginning step step3aa(during:stop:)@PipelineCoreTests
+                    {progress} ending step step3aa(during:stop:)@PipelineCoreTests
                     {deadly} cannot proceess anything any more
                     {progress} stopping execution: deadly error occurred
-                    {progress} skipping in an stopped environment step step3ab(during:stop:)@PipelineTests
-                {progress} stopped step step2a(during:stop:)@PipelineTests
-                {progress} skipping in an stopped environment step step2b(during:stop:)@PipelineTests
-            {progress} stopped step step1(during:)@PipelineTests
+                    {progress} skipping in an stopped environment step step3ab(during:stop:)@PipelineCoreTests
+                {progress} stopped step step2a(during:stop:)@PipelineCoreTests
+                {progress} skipping in an stopped environment step step2b(during:stop:)@PipelineCoreTests
+            {progress} stopped step step1(during:)@PipelineCoreTests
             """)
         
     }
@@ -186,16 +186,16 @@ import Foundation
         step1(during: execution)
         
         #expect(logger.messages.joined(separator: "\n") == """
-            {progress} beginning step step1(during:)@PipelineTests
-                {progress} beginning step step2a(during:stop:)@PipelineTests
-                    {progress} beginning step step3aa(during:stop:)@PipelineTests
-                    {progress} ending step step3aa(during:stop:)@PipelineTests
+            {progress} beginning step step1(during:)@PipelineCoreTests
+                {progress} beginning step step2a(during:stop:)@PipelineCoreTests
+                    {progress} beginning step step3aa(during:stop:)@PipelineCoreTests
+                    {progress} ending step step3aa(during:stop:)@PipelineCoreTests
                     {progress} stopping execution: cannot proceess any further
                     {info} message after the stop
-                    {progress} skipping in an stopped environment step step3ab(during:stop:)@PipelineTests
-                {progress} stopped step step2a(during:stop:)@PipelineTests
-                {progress} skipping in an stopped environment step step2b(during:stop:)@PipelineTests
-            {progress} stopped step step1(during:)@PipelineTests
+                    {progress} skipping in an stopped environment step step3ab(during:stop:)@PipelineCoreTests
+                {progress} stopped step step2a(during:stop:)@PipelineCoreTests
+                {progress} skipping in an stopped environment step step2b(during:stop:)@PipelineCoreTests
+            {progress} stopped step step1(during:)@PipelineCoreTests
             """)
         
     }

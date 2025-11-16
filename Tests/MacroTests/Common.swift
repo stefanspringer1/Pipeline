@@ -1,5 +1,5 @@
 import Foundation
-import Pipeline
+import PipelineCore
 
 protocol Logger: Sendable {
     func log(_ message: String)
@@ -17,21 +17,25 @@ public class PrintingLogger: @unchecked Sendable, Logger {
 public final class CollectingLogger: @unchecked Sendable, Logger {
     
     private var _messages = [String]()
+    let messagesSemaphore = DispatchSemaphore(value: 1)
     
     /// Gets the current messages.
     var messages: [String] {
-        queue.sync {
-            _messages
-        }
+        messagesSemaphore.wait()
+        let value = _messages
+        messagesSemaphore.signal()
+        return value
     }
     
     internal let group = DispatchGroup()
-    internal let queue = DispatchQueue(label: "CollectingLogger")
+    internal let queue = DispatchQueue(label: "CollectingLogger", qos: .background)
     
     public func log(_ message: String) {
         group.enter()
         self.queue.sync {
+            messagesSemaphore.wait()
             self._messages.append(message)
+            messagesSemaphore.signal()
             self.group.leave()
         }
     }
@@ -47,23 +51,28 @@ public final class CollectingLogger: @unchecked Sendable, Logger {
 public final class SeverityTracker: @unchecked Sendable {
     
     private var _severity = InfoType.allCases.min()!
+    let messagesSemaphore = DispatchSemaphore(value: 1)
     
     /// Gets the current severity.
     var value: InfoType {
-        queue.sync {
-            _severity
-        }
+        messagesSemaphore.wait()
+        wait()
+        let value = _severity
+        messagesSemaphore.signal()
+        return value
     }
     
     internal let group = DispatchGroup()
-    internal let queue = DispatchQueue(label: "CollectingLogger")
+    internal let queue = DispatchQueue(label: "CollectingLogger", qos: .background)
     
     public func process(_ newSeverity: InfoType) {
         group.enter()
         self.queue.sync {
+            messagesSemaphore.wait()
             if newSeverity > _severity {
                 _severity = newSeverity
             }
+            messagesSemaphore.signal()
             self.group.leave()
         }
     }

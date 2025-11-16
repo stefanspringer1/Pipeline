@@ -1,5 +1,5 @@
 import Testing
-import Pipeline
+import PipelineCore
 import Foundation
 
 @Suite(.serialized) struct ThrowingTests {
@@ -45,8 +45,8 @@ import Foundation
         }
         
         #expect(uuidReplacements.doReplacements(in: logger.messages.joined(separator: "\n")) == """
-            {progress} beginning step step1(during:)@PipelineTests <#1>
-                {progress} beginning step step2(during:)@PipelineTests [@@ step step1(during:)@PipelineTests -> ] <#2>
+            {progress} beginning step step1(during:)@PipelineCoreTests <#1>
+                {progress} beginning step step2(during:)@PipelineCoreTests [@@ step step1(during:)@PipelineCoreTests -> ] <#2>
             THROWN ERROR: error in step 2!
             """)
         
@@ -99,13 +99,13 @@ import Foundation
         step1(during: Execution(executionEventProcessor: myExecutionEventProcessor))
         
         #expect(uuidReplacements.doReplacements(in: logger.messages.joined(separator: "\n")) == """
-            {progress} beginning step step1(during:)@PipelineTests <#1>
-                {progress} beginning step step2(during:)@PipelineTests [@@ step step1(during:)@PipelineTests -> ] <#2>
-                    {progress} beginning step step3(during:)@PipelineTests [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> ] <#3>
-                        {progress} beginning step step4(during:)@PipelineTests [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests -> step step3(during:)@PipelineTests -> ] <#4>
-                    {error} catched the following error in in step 2: error in step 4! [@@ step step1(during:)@PipelineTests -> step step2(during:)@PipelineTests] <>
-                {progress} ending step step2(during:)@PipelineTests [@@ step step1(during:)@PipelineTests -> ] <#2>
-            {progress} ending step step1(during:)@PipelineTests <#1>
+            {progress} beginning step step1(during:)@PipelineCoreTests <#1>
+                {progress} beginning step step2(during:)@PipelineCoreTests [@@ step step1(during:)@PipelineCoreTests -> ] <#2>
+                    {progress} beginning step step3(during:)@PipelineCoreTests [@@ step step1(during:)@PipelineCoreTests -> step step2(during:)@PipelineCoreTests -> ] <#3>
+                        {progress} beginning step step4(during:)@PipelineCoreTests [@@ step step1(during:)@PipelineCoreTests -> step step2(during:)@PipelineCoreTests -> step step3(during:)@PipelineCoreTests -> ] <#4>
+                    {error} catched the following error in in step 2: error in step 4! [@@ step step1(during:)@PipelineCoreTests -> step step2(during:)@PipelineCoreTests] <>
+                {progress} ending step step2(during:)@PipelineCoreTests [@@ step step1(during:)@PipelineCoreTests -> ] <#2>
+            {progress} ending step step1(during:)@PipelineCoreTests <#1>
             """)
         
     }

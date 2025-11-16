@@ -1,5 +1,5 @@
 import Testing
-import Pipeline
+import PipelineCore
 import Foundation
 
 @Suite(.serialized) struct ParallelTests {

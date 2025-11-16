@@ -1,8 +1,8 @@
 import Testing
-import Pipeline
+import PipelineCore
 import Foundation
 
-@Suite(.serialized) struct AsynchronousPipelineTests {
+@Suite(.serialized) struct MixedPipelineTests {
     
     let metadata = MyMetaData(
         applicationName: "myapp",
@@ -11,7 +11,7 @@ import Foundation
     )
     
     /*
-     This test is the same as the according one in PipelineTests, but with all steps asynchronous.
+     This test is the same as the according one in PipelineTests, but with the outer steps asynchronous and the inner steps synchronous.
      */
     @Test func testExecution() async throws {
             
@@ -35,12 +35,14 @@ import Foundation
             await execution.effectuate("doing something in step2a", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 #expect(await execution.level == 3)
                 await execution.dispensable(named: "calling step3a and step3b in step2a", description: "we might want to skip step3a and step3b in step2a") {
-                    #expect(await execution.level == 4)
-                    await step3a(during: execution)
-                    if stop {
-                        await execution.stop(reason: "for some reason")
+                    await execution.synchronous { synchronousExecution in
+                        #expect(synchronousExecution.level == 4)
+                        step3a(during: synchronousExecution)
+                        if stop {
+                            synchronousExecution.stop(reason: "for some reason")
+                        }
+                        step3b(during: synchronousExecution)
                     }
-                    await step3b(during: execution)
                 }
             }
         }
@@ -48,31 +50,30 @@ import Foundation
         func step2b(during execution: AsyncExecution) async {
             await execution.effectuate("doing something in step2b", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
                 await execution.dispensable(named: "calling step3a in step2b", description: "we might want to skip step3a in step2b") {
-                    #expect(await execution.executionPath == """
-                        step step1(during:stopStep2a:)@\(#file.firstPathPart) -> optional part "step2" -> doing "calling step2b in step1" -> step step2b(during:)@\(#file.firstPathPart) -> dispensable part "calling step3a in step2b"
-                        """)
-                    await step3a(during: execution)
-                    await execution.force {
-                        await step3a(during: execution)
+                    await execution.synchronous { synchronousExecution in
+                        step3a(during: synchronousExecution)
+                        synchronousExecution.force {
+                            step3a(during: synchronousExecution)
+                        }
                     }
                 }
             }
         }
         
-        func step3a(during execution: AsyncExecution) async {
-            await execution.effectuate("doing something in step3a", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-                await step4(during: execution)
+        func step3a(during execution: Execution) {
+            execution.effectuate("doing something in step3a", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                step4(during: execution)
             }
         }
         
-        func step3b(during execution: AsyncExecution) async {
-            await execution.effectuate("doing something in step3b", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+        func step3b(during execution: Execution) {
+            execution.effectuate("doing something in step3b", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
             }
         }
         
-        func step4(during execution: AsyncExecution) async {
-            await execution.effectuate("doing something in step4", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-                await execution.log(.info, "we are in step 4")
+        func step4(during execution: Execution) {
+            execution.effectuate("doing something in step4", checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+                execution.log(.info, "we are in step 4")
             }
         }
         

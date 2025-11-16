@@ -25,7 +25,7 @@ This documentation contains some motivation. For a quick start, there is a tutor
 
 The API documentation is to be created by using DocC, e.g. in Xcode via „Product“ / „Build Documentation“.
 
-The `import Pipeline` and other imports are being dropped in the code samples.
+The `import PipelineCore` and other imports are being dropped in the code samples.
 
 ## How to add the package to your project
 
@@ -52,7 +52,7 @@ swiftSettings: [
 The Workflow package will be then usable in a Swift file after adding the following import:
 
 ```Swift
-import Pipeline
+import PipelineCore
 ```
 
 ## Tutorial

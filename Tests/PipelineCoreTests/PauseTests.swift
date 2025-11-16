@@ -1,5 +1,5 @@
 import Testing
-import Pipeline
+import PipelineCore
 import Foundation
 
 @Suite(.serialized) struct PauseTests {
@@ -55,10 +55,10 @@ import Foundation
         }
         
         let expectedProcessing = """
-                beginning step step1(during:)@PipelineTests (doing something in step1)
-                    beginning step step2(during:)@PipelineTests (doing something in step1)
-                    ending step step2(during:)@PipelineTests (doing something in step1)
-                ending step step1(during:)@PipelineTests (doing something in step1)
+                beginning step step1(during:)@PipelineCoreTests (doing something in step1)
+                    beginning step step2(during:)@PipelineCoreTests (doing something in step1)
+                    ending step step2(during:)@PipelineCoreTests (doing something in step1)
+                ending step step1(during:)@PipelineCoreTests (doing something in step1)
                 """
         
         print("------------------------------------")
