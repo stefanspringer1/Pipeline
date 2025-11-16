@@ -12,22 +12,6 @@ import FoundationEssentials
 import Foundation
 #endif
 
-/// An error with a description.
-///
-/// When printing such an error, its descrition is printed.
-struct PipelineStepError: LocalizedError, CustomStringConvertible {
-
-    private let message: String
-
-    public init(_ message: String) {
-        self.message = message
-    }
-    
-    public var description: String { message }
-    
-    public var errorDescription: String? { message }
-}
-
 extension SyntaxStringInterpolation {
     
     mutating func appendInterpolation<Node: SyntaxProtocol>(
