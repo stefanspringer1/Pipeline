@@ -86,5 +86,12 @@ let package = Package(
                 "StepMacro",
             ]
         ),
+        .testTarget(
+            name: "PipelineTests",
+            dependencies: [
+                "Pipeline",
+            ],
+        ),
+        
     ]
 )
