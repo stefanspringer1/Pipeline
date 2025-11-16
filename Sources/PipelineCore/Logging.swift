@@ -1,4 +1,9 @@
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
+
 import Localization
 
 // The message type that informs about the severity a message.

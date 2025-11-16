@@ -1,4 +1,8 @@
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 public protocol ExecutionEventProcessor: Sendable {
     func process(_ executionEvent: ExecutionEvent)

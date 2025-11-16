@@ -6,7 +6,11 @@ import SwiftSyntaxMacros
 import SwiftSyntax
 import SwiftSyntaxMacros
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 /// An error with a description.
 ///
