@@ -175,7 +175,7 @@ extension String {
         var i = 0
         var s = self
         arguments.forEach { argument in
-            s = s.replacingOccurrences(of: "$\(i)", with: argument)
+            s = s.replacing("$\(i)", with: argument)
             i += 1
         }
         return s
