@@ -2,6 +2,14 @@
 
 This is a simple framework for constructing a pipeline to process a single work item.
 
+---
+
+**NOTE:**
+
+There is an issue with the `@Step` macro on Windows that needs to be resolved.
+
+---
+
 ```Swift
 @Step("...here a description can be added...")
 func myWork_step(during execution: Execution) {
