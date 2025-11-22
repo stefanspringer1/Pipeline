@@ -6,7 +6,7 @@ This is a simple framework for constructing a pipeline to process a single work 
 
 **NOTE:**
 
-There is an issue with the `@Step` macro on Windows that is being resolved.
+The relocation of compilation errors in the code is still not perfect with the `Step` macro, a corresponding correction is being worked on. 
 
 ---
 
