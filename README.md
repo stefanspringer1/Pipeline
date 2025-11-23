@@ -15,24 +15,6 @@ func myWork_step(during execution: Execution) {
 }
 ```
 
----
-
-**NOTE:**
-
-There is currently still a problem with the `@Step` macro on Windows.
-
-As long as this problem exists, you cannot use the `@Step` macro on Windows. Instead, you must embed the body of a step function in the following code:
-
-```swift
-execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-    ...
-}
-```
-
-When the problem is resolved, this note will be deleted and you will then be able to use the more elegant `@Step` notation.
-
----
-
 You could skip the following overview and go directly to the tutorial section to get a first impression.
 
 ## Overview
