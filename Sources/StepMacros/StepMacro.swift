@@ -56,7 +56,7 @@ public struct StepMacro: BodyMacro {
             return [
                 """
                 execution.effectuate(\(raw: arguments), checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-                \((newBody ?? body).statements, location: context.location(of: declaration.body!.statements, at: .beforeLeadingTrivia, filePathMode: .fileID), lineOffset: 1)
+                    \((newBody ?? body).statements, location: context.location(of: declaration.body!.statements, at: .beforeLeadingTrivia, filePathMode: .filePath), lineOffset: 1)
                 }
                 """
             ]
@@ -64,7 +64,7 @@ public struct StepMacro: BodyMacro {
             return [
                 """
                 execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
-                \((newBody ?? body).statements, location: context.location(of: declaration.body!.statements, at: .beforeLeadingTrivia, filePathMode: .fileID), lineOffset: 1)
+                    \((newBody ?? body).statements, location: context.location(of: declaration.body!.statements, at: .beforeLeadingTrivia, filePathMode: .filePath), lineOffset: 1)
                 }
                 """
             ]
