@@ -8,7 +8,7 @@ This is a simple framework for constructing a pipeline to process a single work 
 
 There is currently still a problem with the `@Step` macro on Windows.
 
-As long as this problem exists, you cannot use the `@Step` macro in Windows. Instead, you must embed the body of a step function in the following code:
+As long as this problem exists, you cannot use the `@Step` macro on Windows. Instead, you must embed the body of a step function in the following code:
 
 ```swift
 execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
@@ -16,7 +16,7 @@ execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functio
 }
 ```
 
-When the issue is resolved, this note will be removed.
+When the problem is resolved, this note will be deleted and you will then be able to use the more elegant `@Step` notation.
 
 ---
 
