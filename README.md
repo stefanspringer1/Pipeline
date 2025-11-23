@@ -6,7 +6,7 @@ This is a simple framework for constructing a pipeline to process a single work 
 
 **NOTE:**
 
-There currently is a problem with the `@Step` macro under Windows.
+There currently is a problem with the `@Step` macro on Windows.
 
 As long as this problem exists, you cannot use the `@Step` macro in Windows. Instead, you must embed the body of a Step function in the following code:
 
