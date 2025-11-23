@@ -6,7 +6,17 @@ This is a simple framework for constructing a pipeline to process a single work 
 
 **NOTE:**
 
-There is a problem with the `@Step` macro under Windows; we are working on a solution.
+There currently is a problem with the `@Step` macro under Windows.
+
+As long as this problem exists, you cannot use the `@Step` macro in Windows. Instead, you must embed the body of a Step function in the following code:
+
+``swift
+execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
+    ...
+}
+```
+
+When the issue is resolved, this note will be removed.
 
 ---
 
