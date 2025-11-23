@@ -12,6 +12,21 @@ import FoundationEssentials
 import Foundation
 #endif
 
+fileprivate extension AbstractSourceLocation {
+    var fileWithCorrectedStringRepresentation: ExprSyntax {
+        var filePath = "\(file)"
+        if filePath.contains(/^#+.*"#+$/) {
+            filePath.replace(/^#+"/, with: "")
+            filePath.replace(/"#+$/, with: "")
+            filePath.replace(#"\"#, with: #"\\"#)
+            filePath.replace("\"", with: #"\""#)
+            return "\(raw: "\"\(filePath)\"")"
+        } else {
+            return file
+        }
+    }
+}
+
 extension SyntaxStringInterpolation {
     
     mutating func appendInterpolation<Node: SyntaxProtocol>(
@@ -27,7 +42,7 @@ extension SyntaxStringInterpolation {
                 location.line
             }
             var block = CodeBlockItemListSyntax {
-                "#sourceLocation(file: \(location.file), line: \(line))"
+                "#sourceLocation(file: \(location.fileWithCorrectedStringRepresentation), line: \(line))"
                 "\(node)"
             }
             if close {
