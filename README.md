@@ -10,7 +10,7 @@ There currently is a problem with the `@Step` macro on Windows.
 
 As long as this problem exists, you cannot use the `@Step` macro in Windows. Instead, you must embed the body of a step function in the following code:
 
-``swift
+```swift
 execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functionSignature: #function)) {
     ...
 }
