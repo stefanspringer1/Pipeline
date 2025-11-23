@@ -29,7 +29,7 @@ execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functio
 }
 ```
 
-When the problem is resolved, this note will be deleted and you will then be able to use the more elegant `@Step` notation with a new Swift toolchain.
+When the problem is resolved, this note will be deleted and you will then be able to use the more elegant `@Step` notation.
 
 ---
 
