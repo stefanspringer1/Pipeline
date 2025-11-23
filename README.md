@@ -2,6 +2,19 @@
 
 This is a simple framework for constructing a pipeline to process a single work item.
 
+```Swift
+@Step("...here a description can be added...")
+func myWork_step(during execution: Execution) {
+    
+    // ... some other code...
+    
+    myOther_step(during: execution)
+    
+    // ... some other code...
+    
+}
+```
+
 ---
 
 **NOTE:**
@@ -19,19 +32,6 @@ execution.effectuate(checking: StepID(crossModuleFileDesignation: #file, functio
 When the problem is resolved, this note will be deleted and you will then be able to use the more elegant `@Step` notation.
 
 ---
-
-```Swift
-@Step("...here a description can be added...")
-func myWork_step(during execution: Execution) {
-    
-    // ... some other code...
-    
-    myOther_step(during: execution)
-    
-    // ... some other code...
-    
-}
-```
 
 You could skip the following overview and go directly to the tutorial section to get a first impression.
 
