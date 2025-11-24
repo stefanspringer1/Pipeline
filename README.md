@@ -376,6 +376,12 @@ func hello_step(during execution: Execution, condition: Bool) -> String? {
 }
 ```
 
+### The size of step functions
+
+The body of a step function is encapsulated as a closure and is thus controlled by the pipeline framework. This means that the compiler may have difficulty applying type inference to complex but erroneous code within a step function, making it harder to generate a helpful error message in such cases. Furthermore, with very large functions, the corresponding macro expansion could potentially interfere with the editing process.
+
+It is generally recommended to avoid very large step functions.
+
 ### Outsourcing functionality into a new package
 
 The tree-like pattern of steps that you are able to use in a workflow is a natural starting point to outsource some functionality of your workflow into an external package.
