@@ -103,7 +103,7 @@ extension Execution {
 
 extension AsyncExecution {
     
-    public func log(_ type: InfoType, at positionInfo: String? = nil, _ message: String) async {
+    public func log(_ type: InfoType, _ message: String, at positionInfo: String? = nil) async {
         let actualType: InfoType
         let orginalType: InfoType?
         if let appeaseType = synchronousExecution.appeaseTypes.last, type > appeaseType {
