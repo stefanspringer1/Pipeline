@@ -44,6 +44,7 @@ public final class Execution {
     
     let executionEventProcessor: any ExecutionEventProcessor
     
+    /// This closes all logging.
     public func closeEventProcessing() throws {
         try executionEventProcessor.closeEventProcessing()
     }

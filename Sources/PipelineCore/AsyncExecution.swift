@@ -15,6 +15,7 @@ public final actor AsyncExecution {
     
     public var state: ExecutionState { get async { synchronousExecution.state } }
     
+    /// This closes all logging.
     public func closeEventProcessing() throws {
         try synchronousExecution.executionEventProcessor.closeEventProcessing()
     }
