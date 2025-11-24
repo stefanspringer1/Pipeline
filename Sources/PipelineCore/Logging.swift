@@ -43,9 +43,21 @@ public enum InfoType: Comparable, Codable, Sendable, Hashable, CaseIterable {
 
 }
 
+fileprivate extension String {
+    
+    func withPositionInfo(_ positionInfo: String?) -> String {
+        if let positionInfo {
+            "\(self) @ \(positionInfo)"
+        } else {
+            self
+        }
+    }
+    
+}
+
 extension Execution {
     
-    public func log(_ type: InfoType, _ message: String) {
+    public func log(_ type: InfoType, _ message: String, at positionInfo: String? = nil) {
         let actualType: InfoType
         let orginalType: InfoType?
         if let appeaseType = appeaseTypes.last, type > appeaseType {
@@ -62,7 +74,7 @@ extension Execution {
                 level: level,
                 structuralID: nil, // is a leave, no structural ID necessary
                 coreEvent: .message(
-                    message: message
+                    message: message.withPositionInfo(positionInfo)
                 ),
                 effectuationStack: effectuationStack
             )
@@ -72,12 +84,12 @@ extension Execution {
         }
     }
     
-    public func log(_ type: InfoType, _ message: MultiLanguageText) {
-        log(type, message.forLanguage(language))
+    public func log(_ type: InfoType, _ message: MultiLanguageText, at positionInfo: String? = nil) {
+        log(type, message.forLanguage(language).withPositionInfo(positionInfo))
     }
     
-    public func log(_ message: Message, _ arguments: String...) {
-        let core = message.fact.forLanguage(language).filling(withArguments: arguments)
+    public func log(_ message: Message, at positionInfo: String? = nil, _ arguments: String...) {
+        let core = message.fact.forLanguage(language).filling(withArguments: arguments).withPositionInfo(positionInfo)
         let idPrefix = message.id != nil ? "[\(message.id!)]: " : ""
         let solutionPostfix = message.solution != nil ? " → \(message.solution!.forLanguage(language).filling(withArguments: arguments))" : ""
         log(message.type, "\(idPrefix)\(core)\(solutionPostfix)")
