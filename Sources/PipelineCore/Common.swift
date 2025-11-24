@@ -99,7 +99,7 @@ public struct ExecutionInfoFormat: Sendable {
     }
 }
 
-public struct ExecutionEvent {
+public struct ExecutionEvent: Sendable {
     
     public let type: InfoType
     public let originalType: InfoType? // non-appeased
@@ -175,7 +175,7 @@ public struct ExecutionEvent {
     
 }
 
-public enum ExecutionCoreEvent: CustomStringConvertible {
+public enum ExecutionCoreEvent: Sendable, CustomStringConvertible {
     
     case beginningStep(id: StepID, description: String?, forced: Bool)
     case endingStep(id: StepID, description: String?, forced: Bool)
