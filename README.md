@@ -153,7 +153,13 @@ An activated option can also be dispensed with („dispensing wins“).
 
 If your function contains `async` code (i.e. `await` is being used in the calls), use `AsyncExecution` instead of `Execution` or `execution.async.force`. Inside an `AsyncExecution`, you get the according `Execution` instance via `myAsyncExecution.synchronous`, so you can asynchronous steps at the outside that are calling  synchronous steps in the inside.
 
-The texts `$0`, `$1`, ... are being replaced by arguments (of type `String`) in their order in the call to `execution.log`.
+The texts `$0`, `$1`, ... are being replaced by arguments (of type `String`) in their order in the call to `execution.log(...)`.
+
+## The size of step functions
+
+The body of a step function is actually, by expansion of the `@Step` macro, encapsulated as a closure in order to be controlled by the pipeline framework. This means that the compiler may have difficulty applying type inference to complex but erroneous code within a step function, making it harder to generate a helpful error messages in such cases. Furthermore, with very large functions, the corresponding macro expansion could potentially interfere with the editing process.
+
+It is generally recommended to avoid very large step functions.
 
 ## Motivation
 
@@ -375,12 +381,6 @@ func hello_step(during execution: Execution, condition: Bool) -> String? {
     }
 }
 ```
-
-### The size of step functions
-
-The body of a step function is encapsulated as a closure and is thus controlled by the pipeline framework. This means that the compiler may have difficulty applying type inference to complex but erroneous code within a step function, making it harder to generate a helpful error message in such cases. Furthermore, with very large functions, the corresponding macro expansion could potentially interfere with the editing process.
-
-It is generally recommended to avoid very large step functions.
 
 ### Outsourcing functionality into a new package
 
