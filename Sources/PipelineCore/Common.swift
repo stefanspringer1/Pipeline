@@ -6,6 +6,7 @@ import Foundation
 
 public protocol ExecutionEventProcessor: Sendable {
     func process(_ executionEvent: ExecutionEvent)
+    func closeEventProcessing() throws
     var metadataInfo: String { get }
     var metadataInfoForUserInteraction: String { get }
 }

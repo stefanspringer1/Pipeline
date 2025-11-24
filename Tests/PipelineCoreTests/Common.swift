@@ -3,6 +3,7 @@ import PipelineCore
 
 protocol Logger: Sendable {
     func log(_ message: String)
+    func close()
 }
 
 // from README:
@@ -10,6 +11,10 @@ public class PrintingLogger: @unchecked Sendable, Logger {
     
     public func log(_ message: String) {
         print(message)
+    }
+    
+    func close() {
+        // -
     }
     
 }
@@ -39,6 +44,10 @@ public final class CollectingLogger: @unchecked Sendable, Logger {
     /// Wait until all logging is done.
     public func wait() {
         group.wait()
+    }
+    
+    func close() {
+        // -
     }
     
 }
@@ -87,6 +96,10 @@ public struct ExecutionEventProcessorForLogger: ExecutionEventProcessor {
     
     /// The the severity i.e. the worst message type.
     var severity: InfoType { severityTracker.value }
+    
+    public func closeEventProcessing() throws {
+        logger.close()
+    }
     
     init(
         withMetaDataInfo metadataInfo: String,
