@@ -88,18 +88,22 @@ extension Execution {
         log(type, message.forLanguage(language).withPositionInfo(positionInfo))
     }
     
-    public func log(_ message: Message, at positionInfo: String? = nil, _ arguments: String...) {
+    public func log(_ message: Message, at positionInfo: String? = nil, _ arguments: [String]) {
         let core = message.fact.forLanguage(language).filling(withArguments: arguments).withPositionInfo(positionInfo)
         let idPrefix = message.id != nil ? "[\(message.id!)]: " : ""
         let solutionPostfix = message.solution != nil ? " → \(message.solution!.forLanguage(language).filling(withArguments: arguments))" : ""
         log(message.type, "\(idPrefix)\(core)\(solutionPostfix)")
     }
     
+    public func log(_ message: Message, at positionInfo: String? = nil, _ arguments: String...) {
+        log(message, at: positionInfo, arguments)
+    }
+    
 }
 
 extension AsyncExecution {
     
-    public func log(_ type: InfoType, _ message: String) async {
+    public func log(_ type: InfoType, at positionInfo: String? = nil, _ message: String) async {
         let actualType: InfoType
         let orginalType: InfoType?
         if let appeaseType = synchronousExecution.appeaseTypes.last, type > appeaseType {
@@ -116,7 +120,7 @@ extension AsyncExecution {
                 level: synchronousExecution.level,
                 structuralID: nil, // is a leave, no structural ID necessary
                 coreEvent: .message(
-                    message: message
+                    message: message.withPositionInfo(positionInfo)
                 ),
                 effectuationStack: synchronousExecution.effectuationStack
             )
@@ -126,15 +130,19 @@ extension AsyncExecution {
         }
     }
     
-    public func log(_ type: InfoType, _ message: MultiLanguageText) async {
-        await log(type, message.forLanguage(synchronousExecution.language))
+    public func log(_ type: InfoType, _ message: MultiLanguageText, at positionInfo: String? = nil) async {
+        await log(type, message.forLanguage(synchronousExecution.language).withPositionInfo(positionInfo))
     }
     
-    public func log(_ message: Message, _ arguments: String...) async {
-        let core = message.fact.forLanguage(synchronousExecution.language).filling(withArguments: arguments)
+    public func log(_ message: Message, at positionInfo: String? = nil, _ arguments: [String]) async {
+        let core = message.fact.forLanguage(synchronousExecution.language).filling(withArguments: arguments).withPositionInfo(positionInfo)
         let idPrefix = message.id != nil ? "[\(message.id!)]: " : ""
         let solutionPostfix = message.solution != nil ? " → \(message.solution!.forLanguage(synchronousExecution.language).filling(withArguments: arguments))" : ""
         await log(message.type, "\(idPrefix)\(core)\(solutionPostfix)")
+    }
+    
+    public func log(_ message: Message, at positionInfo: String? = nil, _ arguments: String...) async {
+        await log(message, at: positionInfo, arguments)
     }
     
 }
