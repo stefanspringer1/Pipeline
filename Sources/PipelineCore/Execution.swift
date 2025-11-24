@@ -43,6 +43,11 @@ public final class Execution {
     let language: Language
     
     let executionEventProcessor: any ExecutionEventProcessor
+    
+    public func closeEventProcessing() throws {
+        try executionEventProcessor.closeEventProcessing()
+    }
+    
     public var metadataInfo: String { executionEventProcessor.metadataInfo }
     public var metadataInfoForUserInteraction: String { executionEventProcessor.metadataInfoForUserInteraction }
     

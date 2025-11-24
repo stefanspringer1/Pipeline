@@ -15,6 +15,10 @@ public final actor AsyncExecution {
     
     public var state: ExecutionState { get async { synchronousExecution.state } }
     
+    public func closeEventProcessing() throws {
+        try synchronousExecution.executionEventProcessor.closeEventProcessing()
+    }
+    
     public var metadataInfo: String { synchronousExecution.metadataInfo }
     public var metadataInfoForUserInteraction: String { synchronousExecution.metadataInfoForUserInteraction }
     
