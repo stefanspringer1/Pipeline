@@ -157,7 +157,7 @@ The texts `$0`, `$1`, ... are being replaced by arguments (of type `String`) in 
 
 ## The size of step functions
 
-The body of a step function is actually, by expansion of the `@Step` macro, encapsulated as a closure in order to be controlled by the pipeline framework. This means that the compiler may have difficulty applying type inference to complex but erroneous code within a step function, making it harder to generate a helpful error messages in such cases. Furthermore, with very large functions, the corresponding macro expansion could potentially interfere with the editing process.
+The body of a step function is actually, by expansion of the `@Step` macro, encapsulated as a closure in order to be controlled by the pipeline framework. This means that the compiler may have difficulty applying type inference to complex but erroneous code within a step function, making it harder to generate a helpful error messages in such cases. Furthermore, with very large functions, the corresponding macro expansion could potentially slow down the editing process.
 
 It is generally recommended to avoid very large step functions.
 
