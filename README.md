@@ -161,6 +161,12 @@ The body of a step function is actually, by expansion of the `@Step` macro, enca
 
 It is generally recommended to avoid very large step functions.
 
+## Logging
+
+The Pipeline library allows the use of various logging libraries by first implementing a binding to the Pipeline library. So in principle you can use a logging library of your choice. However, if no such logging library is specified or available, or if you simply want to try out the Pipeline library, you can use the [Logging](https://github.com/stefanspringer1/Logging) library. You then just add the dependency to the [PipelineLogging](https://github.com/stefanspringer1/PipelineLogging) library which implements the according binding to the Pipeline library.
+
+Note that the logging in the application code can be formulated independently of the actual logging library. This means the logging library can easily be changed later without having to replace the logging commands.
+
 ## Motivation
 
 We think of a processing of a work item consisting of several steps, each step fullfilling a certain piece of work. We first see what basic requirements we would like to postulate for those steps, and then how we could realize that in practice.
