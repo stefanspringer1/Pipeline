@@ -49,6 +49,7 @@ public final actor AsyncExecution {
         return self
     }
     
+    @available(*, deprecated, message: "this package is deprecated, use the repository https://github.com/swiftxml/Pipeline instead")
     public init(
         language: Language = .en,
         processID: String? = nil,
@@ -68,6 +69,7 @@ public final actor AsyncExecution {
         )
     }
     
+    @available(*, deprecated, message: "this package is deprecated, use the repository https://github.com/swiftxml/Pipeline instead")
     public init(withExecutionState executionState: ExecutionState) {
         self.synchronousExecution = Execution(
             language: executionState.language,

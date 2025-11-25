@@ -1,5 +1,15 @@
 # Pipeline
 
+---
+
+⚠️ **NOTE:**
+
+This repository is _deprecated;_ use the following, currently maintained repository instead:
+
+https://github.com/swiftxml/Pipeline
+
+---
+
 This is a simple framework for constructing a pipeline to process a single work item.
 
 ```Swift

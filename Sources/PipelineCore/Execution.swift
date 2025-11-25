@@ -91,6 +91,7 @@ public final class Execution {
         return execution
     }
     
+    @available(*, deprecated, message: "this package is deprecated, use the repository https://github.com/swiftxml/Pipeline instead")
     public init(
         language: Language = .en,
         executionEventProcessor: any ExecutionEventProcessor,
@@ -109,6 +110,7 @@ public final class Execution {
         self.waitNotPausedFunction = waitNotPausedFunction
     }
     
+    @available(*, deprecated, message: "this package is deprecated, use the repository https://github.com/swiftxml/Pipeline instead")
     public init(withExecutionState executionState: ExecutionState) {
         self.language = executionState.language
         self.executionEventProcessor = executionState.executionEventProcessor
