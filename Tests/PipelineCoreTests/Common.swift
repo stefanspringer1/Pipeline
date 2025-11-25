@@ -47,7 +47,7 @@ public final class CollectingLogger: @unchecked Sendable, Logger {
     }
     
     func close() {
-        // -
+        wait()
     }
     
 }

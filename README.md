@@ -17,6 +17,10 @@ func myWork_step(during execution: Execution) {
 
 You could skip the following overview and go directly to the tutorial section to get a first impression.
 
+## Logging
+
+The logging implemented in the tests is not intended for use in production code. Use [PipelineLogging](https://github.com/stefanspringer1/PipelineLogging) instead.
+
 ## Overview
 
 The idea behind this framework is that there should be no fixed declarative schema for composing the steps of a processing pipeline for a single work item, as any conceivable schema might not be flexible enough. Instead, the concept is simply “functions calling functions,” with specific functions acting as steps. This gives you everything you need to define, control, and log a processing pipeline with maximum flexibility and efficiency. This also applies to data, which is simple given as arguments to your steps which also can have return values.
