@@ -8,6 +8,8 @@ This repository is _deprecated;_ use the following, currently maintained reposit
 
 https://github.com/swiftxml/Pipeline
 
+**Note the reset version number:** The last version of this repository corresponds to version 1.0.0 of the new repository.
+
 ---
 
 This is a simple framework for constructing a pipeline to process a single work item.
